@@ -37,8 +37,5 @@ export function createApp({ db, clientRoot }: AppOptions) {
 }
 
 export function recordFirstStart(db: Db, now = new Date()) {
-  db.insert(appMeta)
-    .values({ key: "first_started_at", value: now.toISOString() })
-    .onConflictDoNothing()
-    .run();
+  db.insert(appMeta).values({ key: "first_started_at", value: now.toISOString() }).onConflictDoNothing().run();
 }

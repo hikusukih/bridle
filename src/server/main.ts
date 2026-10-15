@@ -1,7 +1,7 @@
-import { serve } from "@hono/node-server";
 import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { serve } from "@hono/node-server";
 import { createApp, recordFirstStart } from "./app.js";
 import { openDatabase } from "./db/index.js";
 
