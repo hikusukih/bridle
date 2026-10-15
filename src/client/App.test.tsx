@@ -19,7 +19,10 @@ describe("App", () => {
   });
 
   it("says so when the server cannot be reached", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 503 })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("", { status: 503 })),
+    );
     render(<App />);
     expect(await screen.findByText(/Could not reach the server/)).toBeTruthy();
   });

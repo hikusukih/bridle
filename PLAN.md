@@ -7,7 +7,7 @@ Every box is sized for one short session and lands as one PR. A box marked **des
 ## Phase 0 — the repo builds and is guarded
 
 - [x] Scaffold: Vite + React + Tailwind client, Hono server on Node, SQLite through Drizzle with a first migration, `npm test` (Vitest) and `npm run build` green. A page that shows a greeting fetched from the server.
-- [ ] CI: a GitHub Actions workflow running lint, tests and build on every PR, plus gitleaks over the full history.
+- [x] CI: a GitHub Actions workflow running lint, tests and build on every PR, plus gitleaks over the full history.
 - [ ] `LICENSE` (MIT), `.editorconfig`, a Dockerfile that builds and serves the app, and a `README.md` quickstart that has actually been run.
 
 ## Phase 1 — channels, on a scripted model

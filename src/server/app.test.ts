@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createApp, recordFirstStart, type Greeting } from "./app.js";
+import { createApp, type Greeting, recordFirstStart } from "./app.js";
 import { openDatabase } from "./db/index.js";
 
 describe("GET /api/greeting", () => {

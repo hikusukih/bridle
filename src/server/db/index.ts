@@ -1,7 +1,7 @@
-import Database from "better-sqlite3";
-import { drizzle, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { fileURLToPath } from "node:url";
+import Database from "better-sqlite3";
+import { type BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import * as schema from "./schema.js";
 
 export type Db = BetterSQLite3Database<typeof schema>;
