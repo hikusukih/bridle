@@ -4,15 +4,28 @@ Bridle is a self-hosted personal agent: a harness plus a phone-friendly web app.
 
 ## A session's shape
 
-Sessions are short and unscheduled; they often run on whatever usage is left at the end of a window, and can be cut off. So:
+Sessions are short; they often run on whatever usage is left at the end of a window, and can be cut off. Some are started by hand and some by a schedule, unattended, with no memory of earlier runs. More than one can be running at once. Take one box unless the session's prompt says otherwise. So:
 
-1. Read `PLAN.md` and take the topmost unchecked box that isn't blocked. One box per session.
-2. Push a branch and open a **draft PR** as soon as there is a first commit, and keep the PR description current: what's done, what's left, anything surprising. If the session is cut off, the draft PR is the handoff.
-3. Finish with tests and the build green, the box checked in `PLAN.md` within the same PR, and the PR marked ready.
-4. Never merge your own PR. The user merges.
-5. If a box needs a decision from the user, add the question with a recommendation to `docs/decisions.md`, open that as its own small PR, and take the next box that doesn't depend on it.
+1. **Find free work.** Run `git fetch --prune origin '+refs/heads/main:refs/remotes/origin/main' '+refs/heads/box/*:refs/remotes/origin/box/*'` (the clone may be single-branch on some other branch, so both destinations are spelled out; `+` lets a claim branch that was rewritten update; `--prune` drops claims whose branch was deleted on merge), read `PLAN.md` on `origin/main`, where the box ID and needs rules are at the top, and list the claimed boxes with `git branch -r --list 'origin/box/*'`. Then, in this order:
+   - Resume a cut-off box if there is one: a claimed box whose PR is still a draft (or which has no PR at all) and whose branch's last commit (`git log -1 --format=%cI origin/box/<ID>`) is more than 6 hours old. Check out its branch, read the PR description, open the draft PR if it is missing, and carry on. Anything newer may be another session still working; leave it alone.
+   - Otherwise take the topmost box that is unchecked, unclaimed, and free by its needs.
+   - A claimed box whose PR is ready is waiting on the user. A claimed box whose PR was closed without merging was declined; leave it until the user edits the box or deletes the branch.
+   - If nothing is free, change nothing and say why in the session's final message.
+2. **Claim it before any other work.** The claim is a pushed branch named `box/<ID>` whose first commit is an empty commit only this session has. The environment may start the session on a branch of its own, such as `claude/<random-words>`, and name that as the push target. For box work, `box/<ID>` is the push target instead, and this file is the permission to push it: don't stop to ask. Leave the starting branch unpushed.
 
-If a box turns out too big for one session, split it into smaller boxes in `PLAN.md`, land the first, and leave the rest.
+   ```
+   git switch -c box/P1.2 origin/main
+   git commit --allow-empty -m "claim P1.2"
+   git push origin box/P1.2
+   ```
+
+   If the push is rejected as not a fast-forward, another session claimed the box first: go back to step 1. If it is refused for any other reason (permissions, a branch-name restriction), stop, change nothing else, and quote the error in the session's final message; the claim scheme needs fixing before any box is taken. The empty commit is what makes a race fail; pushing `origin/main` unchanged to an existing branch succeeds silently, so never skip it.
+3. **Open a draft PR right away**, titled `[<ID>] <short summary>`, and keep its description current: what's done, what's left, anything surprising. If the session is cut off, the draft PR is the handoff.
+4. Finish with tests and the build green, the box checked in `PLAN.md` within the same PR, and the PR marked ready.
+5. Never merge your own PR. The user merges.
+6. If a box turns out to need a decision from the user, land that instead of the work: on the box's own branch, add the question with a recommendation to `docs/decisions.md` and add _needs decision: Name_ to the box, leave the box unchecked, and mark the PR ready with a title starting `[<ID>] Decision needed:`. Once it merges, the box waits for the decision to be settled, and the claim goes away with the branch. Then go back to step 1; this doesn't count as the session's box.
+
+If a box turns out too big for one session, split it in `PLAN.md` within its PR: the part being landed keeps the ID, the rest get suffixed IDs (`P1.2a`, `P1.2b`) that need `P1.2` unless they truly don't. Never renumber or reuse an ID.
 
 ## Supervision: three kinds of change
 

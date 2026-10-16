@@ -9,7 +9,6 @@ Open questions first, each with a recommendation. A session that hits a question
 - **Default models.** Recommend one strong model for conversation and goal planning, and one cheap or local model for watchers and summaries, chosen per scope in configuration.
 - **Text-to-speech provider.** Recommend an OpenAI-compatible speech endpoint, so a local TTS server and a hosted one are interchangeable.
 - **Master key for the vault.** Recommend a key file outside the data directory with owner-only permissions, its path set by an environment variable, with an OS keychain as a later option. Decided in the Phase 6 design note.
-- **Using leftover weekly quota.** A scheduled cloud session shortly before the weekly usage reset could take one box with whatever quota is left. Decide once Phase 1 shows boxes can be picked up cold.
 
 ## Settled
 
@@ -17,5 +16,6 @@ Open questions first, each with a recommendation. A session that hits a question
 - Stack: TypeScript throughout, React + Vite + Tailwind PWA, Hono on Node, SQLite through Drizzle, SSE, Vitest, Docker. The most standard choice, so any agent can pick it up cold.
 - Work happens in Claude Code on the web sessions, which push a branch and open a PR. The user merges; sessions never merge their own PRs.
 - The plan lives in this repo (`PLAN.md`), not anywhere else.
+- Scheduled sessions work the queue unattended: one box every morning, and a weekly run that takes boxes until the remaining usage is spent. Boxes have stable IDs and explicit needs, and a pushed `box/<ID>` branch is the claim, so sessions never take the same box. GitHub Issues were rejected: the plan would live in two places, and plan changes would stop showing up as PR diffs.
 - The harness is ours; models are pluggable behind an adapter, and external agents plug in as ACP delegates.
 - The agent may ask for logins. Credentials go through the key manager, which is held to a higher bar than the rest of the code.
