@@ -16,6 +16,7 @@ Open questions first, each with a recommendation. A session that hits a question
 - Stack: TypeScript throughout, React + Vite + Tailwind PWA, Hono on Node, SQLite through Drizzle, SSE, Vitest, Docker. The most standard choice, so any agent can pick it up cold.
 - Work happens in Claude Code on the web sessions, which push a branch and open a PR. The user merges; sessions never merge their own PRs.
 - The plan lives in this repo (`PLAN.md`), not anywhere else.
+- The plan changes through `[plan]` proposal PRs kept apart from box work, so an idea that turns up mid-box is recorded and offered, not acted on or lost when the session ends. Each phase ends with a review box.
 - Scheduled sessions work the queue unattended: one box every morning, and a weekly run that takes boxes until the remaining usage is spent. Boxes have stable IDs and explicit needs, and a pushed `box/<ID>` branch is the claim, so sessions never take the same box. GitHub Issues were rejected: the plan would live in two places, and plan changes would stop showing up as PR diffs.
 - The harness is ours; models are pluggable behind an adapter, and external agents plug in as ACP delegates.
 - The agent may ask for logins. Credentials go through the key manager, which is held to a higher bar than the rest of the code.

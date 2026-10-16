@@ -20,12 +20,37 @@ Sessions are short; they often run on whatever usage is left at the end of a win
    ```
 
    If the push is rejected as not a fast-forward, another session claimed the box first: go back to step 1. If it is refused for any other reason (permissions, a branch-name restriction), stop, change nothing else, and quote the error in the session's final message; the claim scheme needs fixing before any box is taken. The empty commit is what makes a race fail; pushing `origin/main` unchanged to an existing branch succeeds silently, so never skip it.
-3. **Open a draft PR right away**, titled `[<ID>] <short summary>`, and keep its description current: what's done, what's left, anything surprising. If the session is cut off, the draft PR is the handoff.
-4. Finish with tests and the build green, the box checked in `PLAN.md` within the same PR, and the PR marked ready.
+3. **Open a draft PR right away**, titled `[<ID>] <short summary>`, and keep its description current: what's done, what's left, anything surprising, and a **Proposals** list (see below). If the session is cut off, the draft PR is the handoff.
+4. Finish with tests and the build green, the box checked in `PLAN.md` within the same PR, and the PR marked ready. Then file the PR's proposals.
 5. Never merge your own PR. The user merges.
 6. If a box turns out to need a decision from the user, land that instead of the work: on the box's own branch, add the question with a recommendation to `docs/decisions.md` and add _needs decision: Name_ to the box, leave the box unchecked, and mark the PR ready with a title starting `[<ID>] Decision needed:`. Once it merges, the box waits for the decision to be settled, and the claim goes away with the branch. Then go back to step 1; this doesn't count as the session's box.
 
 If a box turns out too big for one session, split it in `PLAN.md` within its PR: the part being landed keeps the ID, the rest get suffixed IDs (`P1.2a`, `P1.2b`) that need `P1.2` unless they truly don't. Never renumber or reuse an ID.
+
+## Proposals: changing the plan
+
+The plan changes through proposal PRs, kept apart from box work, so the user can take or leave each idea on its own and no idea rides in with a box's code. A box PR touches `PLAN.md` only to check its own box or to split it.
+
+- **Record it the moment it turns up.** When the work shows a reason to do something differently (a box that's wrong or missing a need, a better approach, a design note that no longer fits what was built) or suggests a new feature, add a line to the **Proposals** list in the box's draft PR description right away, so it survives a cut-off. Don't change course on the box itself: finish it as written, or land a decision instead if it can't be done as written (step 6).
+- **File each one as its own PR** once the box PR is ready, one idea per PR so each can be merged or closed alone. A session that resumes a box files any proposals the earlier session listed but didn't get to.
+
+  ```
+  git switch -c plan/<short-name> origin/main
+  git commit -am "<summary>"
+  git push origin plan/<short-name>
+  ```
+
+  Open it ready, not draft, titled `[plan] <summary>`. Its description says what turned it up (which box, what was seen) and what it would change. Then replace the line in the box PR's Proposals list with a link to it.
+- **What a proposal may change:** `PLAN.md`, `docs/decisions.md` and `docs/architecture.md`, never code. It can add boxes, reword or move unclaimed ones, change needs, or add an open question with a recommendation. It never checks a box, never deletes one (it proposes dropping it as a question in `docs/decisions.md` instead), never renumbers, and leaves claimed boxes alone (the suggestion goes in `docs/decisions.md`). A new feature that changes the design gets a line in `docs/architecture.md`; a big one gets a **design note** box rather than a design.
+- **New box IDs** take the next unused number in their phase, counting `main` and every open box and proposal branch, so two open proposals don't hand out the same ID. Right before pushing, for phase 2:
+
+  ```
+  git fetch --prune origin '+refs/heads/main:refs/remotes/origin/main' '+refs/heads/box/*:refs/remotes/origin/box/*' '+refs/heads/plan/*:refs/remotes/origin/plan/*'
+  git grep -h -o -E '\*\*P2\.[0-9]+' $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/main refs/remotes/origin/box/ refs/remotes/origin/plan/) -- PLAN.md | sort -t. -k2 -n -u | tail -1
+  ```
+
+  That prints the highest ID in use; take the next one.
+- Proposals don't count as the session's box, and the session never merges them. A proposal the user closes was declined: don't file it again unless something new turns up, and if so, say what in the new PR.
 
 ## Supervision: three kinds of change
 

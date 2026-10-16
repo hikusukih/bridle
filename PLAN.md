@@ -4,6 +4,8 @@ The work queue. Read `CLAUDE.md` first: it says how a session picks, claims and 
 
 Every box is sized for one short session and lands as one PR. A box marked **design note** produces a document under `docs/design/` and nothing else.
 
+A box marked **review** closes each phase. Its PR follows the proposal rules in `CLAUDE.md` (plan and docs only, no code) and also checks its own box. It compares the plan with what the phase actually built, fixes later boxes whose needs, sizing or wording no longer fit, splits the next phase's boxes down to one-session size, and adds boxes for gaps the phase turned up. It adds boxes only as far ahead as there is evidence for, mostly the next phase. It reads the open `[plan]` PRs first so it doesn't duplicate them. A box it thinks should go becomes a question in `docs/decisions.md`.
+
 ## Box IDs and needs
 
 - Every box starts with an ID such as **P1.2**. An ID never changes and is never reused, even if the box is reworded, moved or split. Order in this file comes from position, not from the ID: a box added later takes the next unused number in its phase and goes wherever it belongs.
@@ -33,6 +35,8 @@ Every box is sized for one short session and lands as one PR. A box marked **des
 
 - [ ] **P1.5** Acceptance: two channels with separate histories survive a server restart and a reload; a failed run shows its error in place and the channel keeps working. _needs P1.1, P1.4_
 
+- [ ] **P1.6** **Review** of Phase 1. _needs P1.1, P1.2, P1.3, P1.4, P1.5_
+
 ## Phase 2 — real models, tools and artifacts
 
 - [ ] **P2.1** **Design note:** the tool registry and effect levels, the approval flow for external tools, and how tool results are sized before they go back to the model. _needs nothing_
@@ -45,6 +49,8 @@ Every box is sized for one short session and lands as one PR. A box marked **des
 
 - [ ] **P2.5** Evals: the `evals/` runner, one scenario format, CI running all scenarios against the scripted model, and a manual command to run them against a real model. _needs P1.4, P0.2_
 
+- [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.5_
+
 ## Phase 3 — long channels stay useful
 
 - [ ] **P3.1** **Design note:** context assembly (the layers of a prompt and a token budget for each), the purpose card, rolling compaction (when it triggers, what it must keep, how a summary is revised), and the drift nudge. _needs P2.1_
@@ -56,6 +62,8 @@ Every box is sized for one short session and lands as one PR. A box marked **des
 - [ ] **P3.4** Rolling compaction, with eval scenarios: facts, decisions and commitments planted early survive several rounds of compaction. _needs P3.2, P2.5_
 
 - [ ] **P3.5** Drift nudge, with "move the last few messages to a new channel". _needs P3.3_
+
+- [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5_
 
 ## Phase 4 — goals and the scheduler
 
@@ -73,6 +81,8 @@ Every box is sized for one short session and lands as one PR. A box marked **des
 
 - [ ] **P4.7** Acceptance: "learn Rust" produces a curriculum held in the goal's state document, visible in the gallery, and a later lesson updates its progress. _needs P4.2, P4.4, P4.5, P2.2_
 
+- [ ] **P4.8** **Review** of Phase 4. _needs P4.1, P4.2, P4.3, P4.4, P4.5, P4.6, P4.7_
+
 ## Phase 5 — the feed
 
 - [ ] **P5.1** Feed items from scheduled runs: title, summary, link, date, source goal, deduplicated against existing items. _needs P4.2, P4.3_
@@ -82,6 +92,8 @@ Every box is sized for one short session and lands as one PR. A box marked **des
 - [ ] **P5.3** Atom feeds, overall and per goal, behind the token, and verified in a real RSS reader. _needs P5.1_
 
 - [ ] **P5.4** Acceptance: a goal watching a public events-listing page fills the feed, a re-run adds only new entries, and the Atom feed shows them on a phone. _needs P5.2, P5.3, P2.3_
+
+- [ ] **P5.5** **Review** of Phase 5. _needs P5.1, P5.2, P5.3, P5.4_
 
 ## Phase 6 — the key manager
 
@@ -99,6 +111,8 @@ Every box is sized for one short session and lands as one PR. A box marked **des
 
 - [ ] **P6.7** An adversarial session: an agent given the codebase and told to make the vault leak, with every finding filed as an issue and fixed or answered. _needs P6.6_
 
+- [ ] **P6.8** **Review** of Phase 6. _needs P6.1, P6.2, P6.3, P6.4, P6.5, P6.6, P6.7_
+
 ## Phase 7 — suggestions
 
 - [ ] **P7.1** The suggestion run: reads goals, purpose cards and recent activity, proposes a few cards, at most daily, off switch in settings. _needs P4.2, P4.3, P3.3_
@@ -106,6 +120,8 @@ Every box is sized for one short session and lands as one PR. A box marked **des
 - [ ] **P7.2** Accept and dismiss: accept becomes a run, goal, schedule or credential request; dismissed cards are remembered. _needs P7.1, P4.5, P6.5_
 
 - [ ] **P7.3** Eval scenarios: suggestions are relevant to the fixture's goals and never repeat a dismissed one. _needs P7.2, P2.5_
+
+- [ ] **P7.4** **Review** of Phase 7. _needs P7.1, P7.2, P7.3_
 
 ## Phase 8 — briefs and notifications
 
@@ -117,6 +133,8 @@ Every box is sized for one short session and lands as one PR. A box marked **des
 
 - [ ] **P8.4** Acceptance: a "daily audio brief" goal produces a listenable brief each morning, and a fresh install notifies nothing until the user opts in. _needs P8.1, P8.2, P8.3, P4.7_
 
+- [ ] **P8.5** **Review** of Phase 8. _needs P8.1, P8.2, P8.3, P8.4_
+
 ## Phase 9 — plug-ins
 
 - [ ] **P9.1** MCP client: configure MCP servers, their tools join the registry with an effect level the user assigns. _needs P2.3_
@@ -124,6 +142,8 @@ Every box is sized for one short session and lands as one PR. A box marked **des
 - [ ] **P9.2** **Design note:** ACP delegates (spawning an external agent, mapping a run to its session, surfacing its permission requests as approval cards), after checking the protocol's current state. _needs P2.1_
 
 - [ ] **P9.3** The ACP delegate tool, verified with one real coding agent. _needs P9.2, P2.3_
+
+- [ ] **P9.4** **Review** of Phase 9. _needs P9.1, P9.2, P9.3_
 
 ## Acceptance (the whole thing)
 
