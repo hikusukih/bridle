@@ -4,8 +4,41 @@ A self-hosted personal agent with a calm, phone-friendly home: persistent **chan
 
 Early and under construction. The design is in `docs/architecture.md` and the work queue is `PLAN.md`.
 
+## Quickstart with Docker
+
+Clone this repository, then from its root:
+
+```sh
+docker build -t bridle .
+docker run -d --name bridle --restart unless-stopped \
+  -p 127.0.0.1:8787:8787 \
+  -v bridle-data:/data \
+  bridle
+```
+
+Open `http://127.0.0.1:8787`. The page shows a greeting from the server and the time it first started.
+
+- Bridle has no login yet. Inside the container it listens on all interfaces so Docker can forward to it, which is why the `-p` above publishes it on the host's loopback only. Don't publish it more widely until authentication lands.
+- Everything Bridle keeps lives in the `bridle-data` volume, mounted at `/data`. Removing the container keeps it; `docker volume rm bridle-data` deletes it.
+- To upgrade, pull the new code, rebuild the image, then `docker rm -f bridle` and run the same `docker run` again. Database migrations apply on startup.
+- The image runs as an unprivileged user and needs no compiler: the SQLite driver's prebuilt binaries cover amd64 and arm64.
+
+## Quickstart from source
+
+Node 22 or newer.
+
+```sh
+npm install
+npm run build
+npm start
+```
+
+Open `http://127.0.0.1:8787`. Data lives in `./data` unless `BRIDLE_DATA_DIR` says otherwise; `PORT` and `HOST` change where it listens (loopback by default).
+
 ## Development
 
-Node 22 or newer. `npm install`, then `npm run dev` starts the server on port 8787 and Vite on port 5173 with `/api` proxied to the server. `npm test` runs Vitest; `npm run lint` runs Biome (`npm run lint:fix` applies its safe fixes); `npm run build` then `npm start` serves the built app from one process. Data lives in `./data` unless `BRIDLE_DATA_DIR` says otherwise. After changing `src/server/db/schema.ts`, run `npm run db:generate` to add a migration; migrations apply on startup.
+`npm run dev` starts the server on port 8787 and Vite on port 5173 with `/api` proxied to the server. `npm test` runs Vitest; `npm run lint` runs Biome (`npm run lint:fix` applies its safe fixes). After changing `src/server/db/schema.ts`, run `npm run db:generate` to add a migration; migrations apply on startup.
 
-License: MIT.
+## License
+
+MIT; see `LICENSE`.
