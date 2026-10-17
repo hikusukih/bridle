@@ -21,7 +21,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P0.2** CI: a GitHub Actions workflow running lint, tests and build on every PR, plus gitleaks over the full history. _needs P0.1_
 
-- [ ] **P0.3** `LICENSE` (MIT), `.editorconfig`, a Dockerfile that builds and serves the app, and a `README.md` quickstart that has actually been run. _needs P0.1_
+- [x] **P0.3** `LICENSE` (MIT), `.editorconfig`, a Dockerfile that builds and serves the app, and a `README.md` quickstart that has actually been run. _needs P0.1_
 
 ## Phase 1 — channels, on a scripted model
 
