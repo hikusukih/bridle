@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
 afterEach(() => {
   cleanup();
+  window.location.hash = "";
   vi.unstubAllGlobals();
 });
 
@@ -25,5 +26,35 @@ describe("App", () => {
     );
     render(<App />);
     expect(await screen.findByText(/Could not reach the server/)).toBeTruthy();
+  });
+
+  it("shows an empty state for each screen and marks the current one", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ message: "Hello from Bridle.", since: "2026-01-02T03:04:05.000Z" })),
+    );
+    render(<App />);
+    expect(screen.getByText("No channels yet")).toBeTruthy();
+    const expected = { goals: "No goals yet", feed: "Nothing in the feed", artifacts: "No artifacts yet" };
+    for (const [id, title] of Object.entries(expected)) {
+      act(() => {
+        window.location.hash = `#/${id}`;
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+      });
+      expect(await screen.findByText(title)).toBeTruthy();
+      const current = screen.getAllByRole("link", { current: "page" });
+      expect(current.every((a) => a.getAttribute("href") === `#/${id}`)).toBe(true);
+    }
+  });
+
+  it("offers all four screens in the navigation", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ message: "", since: "" })),
+    );
+    render(<App />);
+    for (const label of ["Channels", "Goals", "Feed", "Artifacts"]) {
+      expect(screen.getAllByRole("link", { name: label }).length).toBeGreaterThan(0);
+    }
   });
 });
