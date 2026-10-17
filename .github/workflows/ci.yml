@@ -45,3 +45,22 @@ jobs:
           tar xzf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" gitleaks
       - name: Scan the full history
         run: ./gitleaks git --redact --no-banner --verbose .
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t bridle .
+      # Run it the way the README quickstart does, then check that the server answers through the published port.
+      - name: Run the image and request the app
+        run: |
+          docker run -d --name bridle -p 127.0.0.1:8787:8787 -v bridle-data:/data bridle
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8787/api/greeting && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8787/api/greeting
+          curl -fsS http://127.0.0.1:8787/ | grep -qi '<html'
+      - name: Container logs
+        if: failure()
+        run: docker logs bridle
