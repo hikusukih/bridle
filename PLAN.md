@@ -25,7 +25,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 ## Phase 1 — channels, on a scripted model
 
-- [ ] **P1.1** The shell: bottom navigation on narrow screens, a side rail on wide ones, with Channels, Goals, Feed and Artifacts. Empty state for each. PWA manifest and icons so it installs on a phone. _needs P0.1_
+- [x] **P1.1** The shell: bottom navigation on narrow screens, a side rail on wide ones, with Channels, Goals, Feed and Artifacts. Empty state for each. PWA manifest and icons so it installs on a phone. _needs P0.1_
 
 - [ ] **P1.2** Storage: channels, runs and events tables. Create, rename, archive, restore and delete a channel. _needs P1.1_
 
