@@ -29,7 +29,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P1.2** Storage: channels, runs and events tables. Create, rename, archive, restore and delete a channel. _needs P1.1_
 
-- [ ] **P1.3** The model adapter contract and a **scripted model** that replays canned responses from a fixture, including tool calls and failures. A contract test suite every adapter must pass, passing against the scripted model. _needs P0.1_
+- [x] **P1.3** The model adapter contract and a **scripted model** that replays canned responses from a fixture, including tool calls and failures. A contract test suite every adapter must pass, passing against the scripted model. _needs P0.1_
 
 - [ ] **P1.4** The run engine, minimal: a message starts a run, the loop calls the model, events persist and stream over SSE, cancel works, and the step, token and time limits end a run with a visible reason. _needs P1.2, P1.3_
 
