@@ -33,9 +33,11 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P1.4** The run engine, minimal: a message starts a run, the loop calls the model, events persist and stream over SSE, cancel works, and the step, token and time limits end a run with a visible reason. _needs P1.2, P1.3_
 
-- [ ] **P1.5** Acceptance: two channels with separate histories survive a server restart and a reload; a failed run shows its error in place and the channel keeps working. _needs P1.1, P1.4_
+- [ ] **P1.7** The Channels screen: list, create, rename, archive, restore and delete channels from the UI; a channel view that sends a message, streams the run's events and shows a failed run's error in place. _needs P1.2, P1.4_
 
-- [ ] **P1.6** **Review** of Phase 1. _needs P1.1, P1.2, P1.3, P1.4, P1.5_
+- [ ] **P1.5** Acceptance: two channels with separate histories survive a server restart and a reload; a failed run shows its error in place and the channel keeps working. _needs P1.1, P1.4, P1.7_
+
+- [ ] **P1.6** **Review** of Phase 1. _needs P1.1, P1.2, P1.3, P1.4, P1.5, P1.7_
 
 ## Phase 2 — real models, tools and artifacts
 
