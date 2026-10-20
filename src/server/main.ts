@@ -16,6 +16,7 @@ recordFirstStart(db);
 
 // Resolves to the package root from both src/server and dist/server.
 const builtClient = fileURLToPath(new URL("../../dist/client", import.meta.url));
+// No real model adapter exists yet (P2.2), so starting a run answers 503 until one is wired in here.
 const app = createApp({ db, clientRoot: existsSync(builtClient) ? builtClient : undefined });
 
 serve({ fetch: app.fetch, hostname: host, port }, (info) => {
