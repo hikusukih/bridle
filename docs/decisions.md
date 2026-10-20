@@ -10,7 +10,6 @@ Open questions first, each with a recommendation. A session that hits a question
 - **Scheduled workers: replacing the old tasks.** The daily box task and the Wednesday evening task would be disabled when the new tasks go on. Recommend disabling them the same day, not running both.
 - **Scheduled workers: planner timing.** Recommend one planner run a day at midday, which on weekdays is after the box window closes and on Wednesday overlaps it. It stops at 3 open `[plan]` PRs, so overlap does little harm.
 - **Planner focus.** Comments on open PRs every day; Thursday divides the code base into areas and records them; other days alternate feature proposals and review of one area, chosen from the date. Recommend this, with the division heuristic left to the Thursday session to propose.
-
 - **Name.** Working name Bridle: a bridle is how a rider steers a much stronger animal with light, simple input, which is the job of a harness meant to be easy to use. Alternatives in the same spirit: tiller, halter, reins, toyboat, bumper-car. Renaming is a search-and-replace while the repo is young.
 - **Where it runs.** Schedules only fire while the server is up, so it wants an always-on host. Recommend the Docker image on whatever always-on machine is available, reached over a private network or a reverse proxy the operator already runs. Nothing in the code assumes a particular host.
 - **Default models.** Recommend one strong model for conversation and goal planning, and one cheap or local model for watchers and summaries, chosen per scope in configuration.
