@@ -23,11 +23,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P0.3** `LICENSE` (MIT), `.editorconfig`, a Dockerfile that builds and serves the app, and a `README.md` quickstart that has actually been run. _needs P0.1_
 
-- [ ] **P0.4** Slot script: `scripts/slot.sh` with `take`, `beat`, `handoff` and `release` as described in `docs/design/slots.md`, plus tests against a local bare repository covering a race for a free slot, taking over a stale slot, a lost lease being detected, and takeover of a `handoff` or `released` slot. _needs decision: Slots_
-
-- [ ] **P0.5** Slot docs: apply the CLAUDE.md changes listed in `docs/design/slots.md` (a Slots section, the `slot/*` fetch refspec and push permission, the handoff rule after step 4) and move the Slots decision's final form to Settled. _needs P0.4_
-
-- [ ] **P0.6** Role prompts: the watchdog, reaper and planner prompts as files under `docs/ops/`, with the run-window rule and the install steps for the two scheduled tasks written out. _needs P0.5_
+- [ ] **P0.4** Scheduled workers: the box-worker and planner prompts as files under `docs/ops/`, the cron expressions for the weekday and Wednesday windows, and the steps to install the tasks and disable the daily box and Wednesday evening tasks. _needs decision: Scheduled workers_
 
 ## Phase 1 — channels, on a scripted model
 
