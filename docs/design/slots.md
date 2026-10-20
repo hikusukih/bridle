@@ -27,32 +27,40 @@ The holder pushes a `held` commit when it claims a box, at each push of its box 
 
 ### Handoff and the brake
 
-When a box is done and the PR is ready, the worker checks the run window (below) and whether any box is free by its needs. If both say go, it pushes a `handoff` commit and spawns a successor session with the slot name in its prompt. If either says stop, it pushes `released` and spawns nothing. The successor takes the slot like anyone else, so a watchdog spawn and a handoff spawn that collide cost one wasted startup, not two agents.
+When a box is done and the PR is ready, the worker checks the run window (below) and whether any box is free by its needs. If both say go, it pushes a `handoff` commit and fires the slot's own scheduled task (see the next paragraph). If either says stop, it pushes `released` and fires nothing. The successor takes the slot like anyone else, so a watchdog fire and a handoff fire that collide cost one wasted startup, not two agents.
 
-Each session spawned for a slot is tagged `bridle` and `slot:<name>`. The tag is for the reaper and for humans looking at the session list. It is never the lock.
+Each slot has a **poke-only scheduled task** (no cron expression), named `bridle slot box-1`, `bridle slot box-2` and `bridle slot plan`, created once by the user. Firing it is how a slot is started. A hand trial showed why this beats creating sessions directly: a session created through the session API in auto mode had its shell and its own session calls blocked by the permission classifier, while sessions started by a scheduled task did full box work unattended. The tag on a slot session is for the reaper and for humans looking at the session list. It is never the lock. The prompt of each slot task names the slot and tells the session to carry the tag.
 
 ### The watchdog
 
-A scheduled task runs hourly inside the run window. It owns no work. For each free slot it checks whether there is a reason to run: a box slot needs at least one unchecked, unclaimed box that is free by its needs; the planner slot needs fewer than 3 open `[plan]` PRs. If so, it spawns a session tagged for that slot. This is what restarts a chain after a crash or a usage cutoff, and what starts the day. The spawned session takes the lease itself, so a failed spawn never holds a slot.
+A scheduled task runs hourly inside the run window. It owns no work. For each free slot it checks whether there is a reason to run: a box slot needs at least one unchecked, unclaimed box that is free by its needs; the planner slot needs fewer than 3 open `[plan]` PRs. If so, it fires that slot's scheduled task. This is what restarts a chain after a crash or a usage cutoff, and what starts the day. The started session takes the lease itself, so a failed fire never holds a slot. The watchdog replaces the daily box task: that task is disabled once the watchdog has run cleanly for a week.
 
 ### The run window
 
-Windows are measured by the clock, because a session cannot be sure when the provider's usage window started.
+Sessions started by a scheduled task can read the provider's real five-hour window: `get_session` with no ID returns `rate_limit_info` whose type is `five_hour` and whose `resetsAt` is the end of the window, so the window opened at `resetsAt` minus 5 hours. A hand trial confirmed this on a daily-box run, where the window ran from its 06:50 start to 5 hours later. Interactive and API-created sessions instead report a promotional limit that resets weeks away, so only scheduled sessions can use this.
 
-- Every day except Wednesday: the window opens at 07:00 local time and closes 4 hours later. Past the close, no session starts a new box or spawns a successor, and the watchdog spawns nothing. The fifth hour is slack for work in flight.
-- Wednesday: no close. The window runs until the reaper at 23:00.
+- Every day except Wednesday: a session starts no new box and fires no successor once it is 4 hours into the window, that is, once the current time is past `resetsAt` minus 1 hour. The fifth hour is slack for work in flight.
+- Wednesday: no close. The window check is skipped, and the reaper at 23:00 ends the day.
+- If `rate_limit_info` is missing or not `five_hour`, fall back to the clock: 07:00 plus 4 hours in the user's time zone.
 
 ### The reaper
 
-A second scheduled task, which is not itself tagged `bridle`, runs at 11:00 local time on every day except Wednesday and at 23:00 on Wednesday. It lists recent sessions, keeps those tagged `bridle` that are running or idle, and archives them. It then pushes `released` to each slot branch. The slots make a runaway impossible by construction; the reaper is the backstop for a session that ignores its instructions. Archiving a session mid-box leaves a draft PR and a claim branch, which the resume rule picks up the next time a box session runs.
+A second scheduled task, which is not itself tagged `bridle`, runs at 11:00 local time on every day except Wednesday and at 23:00 on Wednesday. It lists recent sessions, keeps those whose `tags` include `bridle` and whose status is running or idle, and archives them. The list call's tag filter is rejected from inside a session and its output is large, so the reaper passes a small limit and filters the returned rows itself. It then pushes `released` to each slot branch. In auto mode an archive call can be denied by the permission classifier, so the reaper task needs an explicit permission rule for it. The slots make a runaway impossible by construction; the reaper is the backstop for a session that ignores its instructions. Archiving a session mid-box leaves a draft PR and a claim branch, which the resume rule picks up the next time a box session runs.
 
 ### The planner
 
-When no box is free, nobody is idle: the planner reads the whole code base, `docs/` and the open and closed `[plan]` PRs, and looks for features, bugs and improvements. Each finding becomes its own `[plan]` PR, per the existing proposal rules, so a bug becomes a proposed fix box, never a code change. A closed `[plan]` PR was declined and is not refiled without something new. The planner stops filing when 3 `[plan]` PRs are open, so an unattended day cannot bury the user in review work. Because the user reviews and merges between runs, the next run finds new work: that is the loop.
+When no box is free, nobody is idle: the planner reads the code base and looks for features, bugs and improvements. Each finding becomes its own `[plan]` PR, per the existing proposal rules, so a bug becomes a proposed fix box, never a code change. A closed `[plan]` PR was declined and is not refiled without something new. The planner stops filing when 3 `[plan]` PRs are open, so an unattended day cannot bury the user in review work. Because the user reviews and merges between runs, the next run finds new work: that is the loop.
+
+It does not read everything every run. The day of the week picks the focus, and no state is stored, because the focus is computed from the date:
+
+- Every day, the planner's first session reads new comments on open PRs and on `[plan]` PRs, and turns the ones that call for a plan change into proposals or replies.
+- Thursday is structure day: the planner proposes how to divide the code base into areas (by directory, by layer, or by feature; the heuristic is its to propose and the user's to accept) and records the list in `docs/design/areas.md`.
+- Every other day, the planner alternates between two kinds of session: a feature session that proposes new work, and a review session of one area, taking the areas in order. The area for a given day is the count of days since the list was merged, modulo the number of areas.
 
 ## What was rejected
 
 - Counting sessions with `list_sessions` and spawning when the count is low. It races, it needs the whole list (tens of kilobytes, mostly archived), and its tag filter is not available from inside a session.
+- Creating each slot's session through the session API. Auto mode blocked those sessions' shell commands and their own session calls in a trial, so unattended chains of them would stall. Scheduled tasks are used instead.
 - A fixed schedule of independent triggers, each taking one box. Simple, but nothing restarts a chain that dies, and nothing stops two triggers from overlapping an idle session.
 - Letting sessions spawn without a cap. A bug becomes a fork bomb. The cap is the slot count, and it holds even if every other control fails.
 
@@ -70,4 +78,16 @@ Not an eval scenario, since nothing here is harness behavior. Instead `scripts/s
 
 ## Open points
 
-The questions that need the user are in `docs/decisions.md`. The main ones: whether a session spawned by a scheduled task is allowed to spawn and archive sessions at all (it must be tried), the time zone, whether a clock window is close enough to the real usage window, and what happens to the existing morning and weekly schedules.
+The questions that need the user are in `docs/decisions.md`. The main ones: whether firing a scheduled task from inside a scheduled session works (untried, since firing starts real work), the permission rule the reaper needs, and how the planner divides the code base.
+
+## Hand trial, 2026-10-20
+
+What was tried and what happened, so the design rests on observation.
+
+- A race on a scratch `slot/` branch: create and fast-forward pushes succeeded, and a second push on the same parent was rejected as not a fast-forward. The lease mechanism works on the real remote.
+- Deleting that branch failed both ways with the connection dropped. Sessions cannot delete remote branches, so slot branches are permanent, and that is fine because they are reused.
+- The session list's tag filter returns an error. Rows carry their `tags`, so filtering client-side works. Sessions started by a scheduled task are retrievable by ID, and sessions created through the API get a `parent_session_id` automatically.
+- Sessions created through the API without a repository get no checkout; a watchdog that used the API would need to pass the repository.
+- Sessions created through the API in auto mode failed their own `create_session` and `send_message` calls with a classifier error, and a shell `git` command was blocked the same way. Scheduled sessions did not show this.
+- An archive call was allowed once and denied once by the classifier for the same kind of session, so the reaper cannot rely on it without a permission rule.
+- Firing a scheduled task was not tried, because it would start real box work.
