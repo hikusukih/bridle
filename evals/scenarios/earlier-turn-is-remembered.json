@@ -1,0 +1,7 @@
+{
+  "name": "earlier-turn-is-remembered",
+  "description": "A fact stated in one run is still in the channel history sent with the next; the real-model check is that the reply uses it.",
+  "messages": ["My cat is named Biscuit.", "What is my cat's name?"],
+  "script": { "turns": [{ "text": ["Noted."] }, { "text": ["Your cat is named Biscuit."] }] },
+  "expect": [{ "status": "done" }, { "status": "done", "replyIncludes": ["Biscuit"] }]
+}

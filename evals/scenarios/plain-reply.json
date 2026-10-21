@@ -1,0 +1,7 @@
+{
+  "name": "plain-reply",
+  "description": "A message gets a reply and the run ends done.",
+  "messages": ["Say hello."],
+  "script": { "turns": [{ "text": ["Hello", " there."] }] },
+  "expect": [{ "status": "done", "replyIncludes": ["Hello there."], "eventTypes": ["message", "text"] }]
+}
