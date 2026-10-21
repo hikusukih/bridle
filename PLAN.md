@@ -33,7 +33,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P1.4** The run engine, minimal: a message starts a run, the loop calls the model, events persist and stream over SSE, cancel works, and the step, token and time limits end a run with a visible reason. _needs P1.2, P1.3_
 
-- [ ] **P1.8** Server wiring: `main.ts` builds a run engine from a model chosen by configuration (`BRIDLE_MODEL=scripted` with a fixture file path, for development and acceptance until real adapters land in P2.2), calls `recoverInterrupted()` at startup, and the README says how to try it. _needs P1.4_
+- [x] **P1.8** Server wiring: `main.ts` builds a run engine from a model chosen by configuration (`BRIDLE_MODEL=scripted` with a fixture file path, for development and acceptance until real adapters land in P2.2), calls `recoverInterrupted()` at startup, and the README says how to try it. _needs P1.4_
 
 - [ ] **P1.7** The Channels screen: list, create, rename, archive, restore and delete channels from the UI; a channel view that sends a message, streams the run's events and shows a failed run's error in place. _needs P1.2, P1.4, P1.8_
 
