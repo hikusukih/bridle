@@ -23,7 +23,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P0.3** `LICENSE` (MIT), `.editorconfig`, a Dockerfile that builds and serves the app, and a `README.md` quickstart that has actually been run. _needs P0.1_
 
-- [ ] **P0.4** Scheduled workers: the box-worker and planner prompts as files under `docs/ops/`, the cron expressions for the weekday and Wednesday windows, and the steps to install the tasks and disable the daily box and Wednesday evening tasks. _needs decision: Scheduled workers_
+- [ ] **P0.4** Scheduled workers: the box-worker prompt and the two planner prompts (morning review, later feature) as files under `docs/ops/`, the cron expressions for the weekday and Wednesday windows and the planner runs, and the steps to install the tasks and disable the daily box and Wednesday evening tasks. _needs nothing_
 
 ## Phase 1 — channels, on a scripted model
 
