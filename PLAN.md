@@ -25,6 +25,8 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P0.4** Scheduled workers: the box-worker and planner prompts as files under `docs/ops/`, the cron expressions for the weekday and Wednesday windows, and the steps to install the tasks and disable the daily box and Wednesday evening tasks. _needs decision: Scheduled workers_
 
+- [ ] **P0.5** Rename Bridle to Brindle: code, docs, UI text, PWA manifest, package name, Docker image, container and volume names, the database file and the `BRIDLE_*` environment variables. An existing install keeps working: on startup the server renames `bridle.sqlite` to `brindle.sqlite` if only the old file exists, and reads an old `BRIDLE_*` variable with a warning when the new one is unset. The README says how to move an existing `bridle-data` volume. Renaming the GitHub repository is the user's step, listed in the PR. Best landed when few box PRs are open, since it touches most files. _needs nothing_
+
 ## Phase 1 — channels, on a scripted model
 
 - [x] **P1.1** The shell: bottom navigation on narrow screens, a side rail on wide ones, with Channels, Goals, Feed and Artifacts. Empty state for each. PWA manifest and icons so it installs on a phone. _needs P0.1_
