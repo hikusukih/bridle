@@ -37,6 +37,19 @@ npm start
 
 Open `http://127.0.0.1:8787`. Data lives in `./data` unless `BRIDLE_DATA_DIR` says otherwise; `PORT` and `HOST` change where it listens (loopback by default).
 
+### Trying runs with the scripted model
+
+Until the real model adapters land, set `BRIDLE_MODEL=scripted` and `BRIDLE_SCRIPTED_FIXTURE` to a JSON file of canned turns to make sending a message work. Without `BRIDLE_MODEL`, starting a run answers 503.
+
+```sh
+cat > fixture.json <<'JSON'
+{ "turns": [{ "text": ["Hello ", "from the scripted model."], "usage": { "inputTokens": 5, "outputTokens": 6 } }] }
+JSON
+BRIDLE_MODEL=scripted BRIDLE_SCRIPTED_FIXTURE=fixture.json npm start
+```
+
+Each turn answers one model call and the script does not loop, so a fixture of N turns serves N calls across all runs until the server restarts. Runs left working by a previous process are marked failed at startup.
+
 ## Development
 
 `npm run dev` starts the server on port 8787 and Vite on port 5173 with `/api` proxied to the server. `npm test` runs Vitest; `npm run lint` runs Biome (`npm run lint:fix` applies its safe fixes). After changing `src/server/db/schema.ts`, run `npm run db:generate` to add a migration; migrations apply on startup.
