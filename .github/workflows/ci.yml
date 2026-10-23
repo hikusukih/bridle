@@ -43,8 +43,9 @@ jobs:
           curl -sSfLO "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
           sha256sum --check --ignore-missing "gitleaks_${GITLEAKS_VERSION}_checksums.txt"
           tar xzf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" gitleaks
+      # Only the history behind this ref: by default gitleaks walks every fetched branch, so one bad branch would fail every PR. Each branch is still scanned by its own PR run.
       - name: Scan the full history
-        run: ./gitleaks git --redact --no-banner --verbose .
+        run: ./gitleaks git --redact --no-banner --verbose --log-opts="HEAD" .
 
   docker:
     runs-on: ubuntu-latest
