@@ -21,6 +21,8 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P0.2** CI: a GitHub Actions workflow running lint, tests and build on every PR, plus gitleaks over the full history. _needs P0.1_
 
+- [ ] **P0.6** Move the process docs into `.agents/`, so how agents are managed is kept apart from the product: `PLAN.md`, the process entries of `docs/decisions.md` (product decisions such as the stack stay in `docs/`), `docs/design/slots.md`, and `docs/ops/` if P0.4 has landed. `CLAUDE.md` stays at the root, where sessions read it; update its paths and fetch commands, the paths it lets a `[plan]` PR change (adding process design notes under `.agents/`, so a scheduling note can ride in a `[plan]` PR), and every other reference. Open box branches still carry the old paths, so the PR says how a resuming session merges main. _needs nothing_
+
 - [x] **P0.3** `LICENSE` (MIT), `.editorconfig`, a Dockerfile that builds and serves the app, and a `README.md` quickstart that has actually been run. _needs P0.1_
 
 - [ ] **P0.4** Scheduled workers: the box-worker and planner prompts as files under `docs/ops/`, the cron expressions for the weekday and Wednesday windows, and the steps to install the tasks and disable the daily box and Wednesday evening tasks. _needs decision: Scheduled workers_
