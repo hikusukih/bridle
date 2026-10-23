@@ -23,6 +23,8 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P0.3** `LICENSE` (MIT), `.editorconfig`, a Dockerfile that builds and serves the app, and a `README.md` quickstart that has actually been run. _needs P0.1_
 
+- [ ] **P0.4** Scheduled workers: the box-worker and planner prompts as files under `docs/ops/`, the cron expressions for the weekday and Wednesday windows, and the steps to install the tasks and disable the daily box and Wednesday evening tasks. _needs decision: Scheduled workers_
+
 ## Phase 1 — channels, on a scripted model
 
 - [x] **P1.1** The shell: bottom navigation on narrow screens, a side rail on wide ones, with Channels, Goals, Feed and Artifacts. Empty state for each. PWA manifest and icons so it installs on a phone. _needs P0.1_
