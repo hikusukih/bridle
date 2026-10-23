@@ -43,7 +43,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 ## Phase 2 — real models, tools and artifacts
 
-- [ ] **P2.1** **Design note:** the tool registry and effect levels, the approval flow for external tools, and how tool results are sized before they go back to the model. _needs nothing_
+- [x] **P2.1** **Design note:** the tool registry and effect levels, the approval flow for external tools, and how tool results are sized before they go back to the model. _needs nothing_
 
 - [ ] **P2.2** Adapters: OpenAI-compatible chat completions and the Anthropic Messages API, both with streaming and tool calls, passing the contract suite against recorded fixtures so CI needs no key. Model choice per channel, keys from environment variables. _needs P1.2, P1.3_
 
