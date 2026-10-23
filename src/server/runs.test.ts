@@ -190,3 +190,23 @@ describe("run routes", () => {
     expect((await bare.request("/api/channels/x/runs", { method: "POST" })).status).toBe(503);
   });
 });
+
+describe("GET /api/channels/:id/runs", () => {
+  it("returns the channel's runs oldest first with their events, and 404 for an unknown channel", async () => {
+    const { engine, channel, app } = setup({ turns: [{ text: ["one"] }, { text: ["two"] }] });
+    for (const text of ["first", "second"]) {
+      const run = engine.start(channel.id, text);
+      await engine.whenSettled(run.id);
+    }
+
+    const res = await app.request(`/api/channels/${channel.id}/runs`);
+    const body = (await res.json()) as { status: string; events: { type: string; data: string }[] }[];
+    expect(body.map((r) => r.events.map((e) => e.type))).toEqual([
+      ["message", "text"],
+      ["message", "text"],
+    ]);
+    expect(JSON.parse(body[1]?.events[0]?.data ?? "null")).toEqual({ text: "second" });
+
+    expect((await app.request("/api/channels/nope/runs")).status).toBe(404);
+  });
+});

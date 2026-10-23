@@ -14,7 +14,7 @@ import {
 } from "./channels.js";
 import type { Db } from "./db/index.js";
 import { appMeta } from "./db/schema.js";
-import { type RunEngine, RunError, type RunEvent } from "./runs.js";
+import { channelTranscript, type RunEngine, RunError, type RunEvent } from "./runs.js";
 
 export type Greeting = {
   message: string;
@@ -59,6 +59,7 @@ export function createApp({ db, engine, clientRoot }: AppOptions) {
     return engine;
   };
 
+  app.get("/api/channels/:id/runs", (c) => c.json(channelTranscript(db, c.req.param("id"))));
   app.post("/api/channels/:id/runs", async (c) => {
     const body = (await c.req.json().catch(() => ({}))) as { text?: unknown };
     return c.json(needEngine().start(c.req.param("id"), body.text), 201);

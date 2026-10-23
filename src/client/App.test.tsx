@@ -13,7 +13,11 @@ describe("App", () => {
   it("shows the greeting fetched from the server", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => Response.json({ message: "Hello from Bridle.", since: "2026-01-02T03:04:05.000Z" })),
+      vi.fn(async (url: string) =>
+        url.startsWith("/api/channels")
+          ? Response.json([])
+          : Response.json({ message: "Hello from Bridle.", since: "2026-01-02T03:04:05.000Z" }),
+      ),
     );
     render(<App />);
     expect(await screen.findByText("Hello from Bridle.")).toBeTruthy();
@@ -31,10 +35,14 @@ describe("App", () => {
   it("shows an empty state for each screen and marks the current one", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => Response.json({ message: "Hello from Bridle.", since: "2026-01-02T03:04:05.000Z" })),
+      vi.fn(async (url: string) =>
+        url.startsWith("/api/channels")
+          ? Response.json([])
+          : Response.json({ message: "Hello from Bridle.", since: "2026-01-02T03:04:05.000Z" }),
+      ),
     );
     render(<App />);
-    expect(screen.getByText("No channels yet")).toBeTruthy();
+    expect(await screen.findByText("No channels yet")).toBeTruthy();
     const expected = { goals: "No goals yet", feed: "Nothing in the feed", artifacts: "No artifacts yet" };
     for (const [id, title] of Object.entries(expected)) {
       act(() => {
@@ -50,7 +58,7 @@ describe("App", () => {
   it("offers all four screens in the navigation", () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => Response.json({ message: "", since: "" })),
+      vi.fn(async (url: string) => Response.json(url.startsWith("/api/channels") ? [] : { message: "", since: "" })),
     );
     render(<App />);
     for (const label of ["Channels", "Goals", "Feed", "Artifacts"]) {

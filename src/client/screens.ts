@@ -30,6 +30,12 @@ export const screens = [
 export type ScreenId = (typeof screens)[number]["id"];
 
 export function screenFromHash(hash: string): ScreenId {
-  const id = hash.replace(/^#\/?/, "");
+  const id = hash.replace(/^#\/?/, "").split("/")[0];
   return screens.find((s) => s.id === id)?.id ?? "channels";
+}
+
+/** `#/channels/<id>` opens one channel; any other hash shows the list. */
+export function channelIdFromHash(hash: string): string | null {
+  const [screen, id] = hash.replace(/^#\/?/, "").split("/");
+  return screen === "channels" && id ? decodeURIComponent(id) : null;
 }

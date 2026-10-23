@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Greeting } from "../server/app";
+import { ChannelsScreen } from "./Channels";
 import { type ScreenId, screenFromHash, screens } from "./screens";
 
 type State = { kind: "loading" } | { kind: "ready"; greeting: Greeting } | { kind: "error"; message: string };
@@ -75,10 +76,18 @@ export function App() {
           <NavLinks current={screen} orientation="rail" />
         </div>
       </nav>
-      <main className="mx-auto flex min-h-dvh max-w-md flex-1 flex-col justify-center gap-2 p-6 pb-24 md:pb-6">
-        <h1 className="text-2xl font-semibold">{active.label}</h1>
-        <h2 className="font-medium">{active.empty.title}</h2>
-        <p className="text-slate-600">{active.empty.body}</p>
+      <main
+        className={`mx-auto flex min-h-dvh max-w-md flex-1 flex-col ${screen === "channels" ? "" : "justify-center"} gap-2 p-6 pb-24 md:pb-6`}
+      >
+        {screen === "channels" ? (
+          <ChannelsScreen />
+        ) : (
+          <>
+            <h1 className="text-2xl font-semibold">{active.label}</h1>
+            <h2 className="font-medium">{active.empty.title}</h2>
+            <p className="text-slate-600">{active.empty.body}</p>
+          </>
+        )}
         <div className="mt-6 text-sm text-slate-500">
           {status.kind === "loading" && <p>Reaching the server…</p>}
           {status.kind === "ready" && (

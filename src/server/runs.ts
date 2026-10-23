@@ -27,6 +27,27 @@ export class RunError extends Error {
   }
 }
 
+export type RunWithEvents = Run & { events: RunEvent[] };
+
+/** A channel's runs oldest first, each with its stored events, for drawing the transcript. Needs no model, so it works without an engine. */
+export function channelTranscript(db: Db, channelId: string): RunWithEvents[] {
+  getChannel(db, channelId);
+  const channelRuns = db.select().from(runs).where(eq(runs.channelId, channelId)).orderBy(asc(runs.startedAt)).all();
+  if (!channelRuns.length) return [];
+  const rows = db
+    .select()
+    .from(events)
+    .where(
+      inArray(
+        events.runId,
+        channelRuns.map((r) => r.id),
+      ),
+    )
+    .orderBy(asc(events.seq))
+    .all();
+  return channelRuns.map((run) => ({ ...run, events: rows.filter((e) => e.runId === run.id) }));
+}
+
 type Listener = (event: RunEvent | null) => void;
 
 /** Owns the live side of runs: abort handles and SSE subscribers. Persistence stays in the database. */
