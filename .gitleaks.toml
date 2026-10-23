@@ -1,0 +1,9 @@
+# Default rules, plus an allowance for the fake secrets CLAUDE.md tells contributors to use in tests and examples.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Documented fake secrets: sk-test- and then a repeating pattern"
+regexes = [
+  '''^sk-test-(?:1234abcd)+$''',
+]
