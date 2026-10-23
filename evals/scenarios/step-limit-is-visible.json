@@ -1,0 +1,13 @@
+{
+  "name": "step-limit-is-visible",
+  "description": "A model that keeps calling tools is stopped at the step limit with a stated reason.",
+  "messages": ["Keep going."],
+  "limits": { "maxSteps": 2 },
+  "script": {
+    "turns": [
+      { "toolCalls": [{ "id": "c1", "name": "nothing", "arguments": {} }] },
+      { "toolCalls": [{ "id": "c2", "name": "nothing", "arguments": {} }] }
+    ]
+  },
+  "expect": [{ "status": "stopped", "stopReasonIncludes": "step limit" }]
+}

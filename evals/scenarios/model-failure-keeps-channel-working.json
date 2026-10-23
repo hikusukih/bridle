@@ -1,0 +1,9 @@
+{
+  "name": "model-failure-keeps-channel-working",
+  "description": "A model failure ends that run as failed and the next message in the channel still works.",
+  "messages": ["First.", "Second."],
+  "script": {
+    "turns": [{ "fail": { "kind": "unavailable", "message": "scripted outage" } }, { "text": ["Back again."] }]
+  },
+  "expect": [{ "status": "failed" }, { "status": "done", "replyIncludes": ["Back again."] }]
+}
