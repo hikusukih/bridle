@@ -25,7 +25,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P0.3** `LICENSE` (MIT), `.editorconfig`, a Dockerfile that builds and serves the app, and a `README.md` quickstart that has actually been run. _needs P0.1_
 
-- [ ] **P0.4** Scheduled workers: the box-worker prompt and the two planner prompts (morning review, later feature) as files under `docs/ops/`, the cron expressions for the weekday and Wednesday windows and the planner runs, and the steps to install the tasks and disable the daily box and Wednesday evening tasks. _needs nothing_
+- [ ] **P0.4** Scheduled workers: the box-worker prompt and the two planner prompts (morning review, later feature) as files under `.agents/ops/` (`docs/ops/` if P0.6 has not landed), the cron expressions for the weekday and Wednesday windows and the planner runs, and the steps to install the tasks and disable the daily box and Wednesday evening tasks. _needs nothing_
 
 - [ ] **P0.5** Rename Bridle to Brindle: code, docs, UI text, PWA manifest, package name, Docker image, container and volume names, the database file and the `BRIDLE_*` environment variables. An existing install keeps working: on startup the server renames `bridle.sqlite` to `brindle.sqlite` if only the old file exists, and reads an old `BRIDLE_*` variable with a warning when the new one is unset. The README says how to move an existing `bridle-data` volume. Renaming the GitHub repository is the user's step, listed in the PR. Best landed when few box PRs are open, since it touches most files. _needs nothing_
 
