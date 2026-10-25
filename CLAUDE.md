@@ -1,12 +1,12 @@
 # Working in this repo
 
-Bridle is a self-hosted personal agent: a harness plus a phone-friendly web app. `docs/architecture.md` is the design, `PLAN.md` is the work queue, `docs/decisions.md` holds open questions and settled answers.
+Bridle is a self-hosted personal agent: a harness plus a phone-friendly web app. `docs/architecture.md` is the design, `.agents/PLAN.md` is the work queue, `docs/decisions.md` holds open product questions and settled answers. Process (how agents are managed) lives under `.agents/`: the plan, `.agents/decisions.md` and process design notes such as `.agents/design/slots.md`.
 
 ## A session's shape
 
 Sessions are short; they often run on whatever usage is left at the end of a window, and can be cut off. Some are started by hand and some by a schedule, unattended, with no memory of earlier runs. More than one can be running at once. Take one box unless the session's prompt says otherwise. So:
 
-1. **Find free work.** Run `git fetch --prune origin '+refs/heads/main:refs/remotes/origin/main' '+refs/heads/box/*:refs/remotes/origin/box/*'` (the clone may be single-branch on some other branch, so both destinations are spelled out; `+` lets a claim branch that was rewritten update; `--prune` drops claims whose branch was deleted on merge), read `PLAN.md` on `origin/main`, where the box ID and needs rules are at the top, and list the claimed boxes with `git branch -r --list 'origin/box/*'`. Then, in this order:
+1. **Find free work.** Run `git fetch --prune origin '+refs/heads/main:refs/remotes/origin/main' '+refs/heads/box/*:refs/remotes/origin/box/*'` (the clone may be single-branch on some other branch, so both destinations are spelled out; `+` lets a claim branch that was rewritten update; `--prune` drops claims whose branch was deleted on merge), read `.agents/PLAN.md` on `origin/main`, where the box ID and needs rules are at the top, and list the claimed boxes with `git branch -r --list 'origin/box/*'`. Then, in this order:
    - Resume a cut-off box if there is one: a claimed box whose PR is still a draft (or which has no PR at all) and whose branch's last commit (`git log -1 --format=%cI origin/box/<ID>`) is more than 6 hours old. Check out its branch, read the PR description, open the draft PR if it is missing, and carry on. Anything newer may be another session still working; leave it alone.
    - Otherwise take the topmost box that is unchecked, unclaimed, and free by its needs.
    - A claimed box whose PR is ready is waiting on the user. A claimed box whose PR was closed without merging was declined; leave it until the user edits the box or deletes the branch.
@@ -21,15 +21,15 @@ Sessions are short; they often run on whatever usage is left at the end of a win
 
    If the push is rejected as not a fast-forward, another session claimed the box first: go back to step 1. If it is refused for any other reason (permissions, a branch-name restriction), stop, change nothing else, and quote the error in the session's final message; the claim scheme needs fixing before any box is taken. The empty commit is what makes a race fail; pushing `origin/main` unchanged to an existing branch succeeds silently, so never skip it.
 3. **Open a draft PR right away**, titled `[<ID>] <short summary>`, and keep its description current: what's done, what's left, anything surprising, and a **Proposals** list (see below). If the session is cut off, the draft PR is the handoff.
-4. Finish with tests and the build green, the box checked in `PLAN.md` within the same PR, and the PR marked ready. Then file the PR's proposals.
+4. Finish with tests and the build green, the box checked in `.agents/PLAN.md` within the same PR, and the PR marked ready. Then file the PR's proposals.
 5. Never merge your own PR. The user merges.
-6. If a box turns out to need a decision from the user, land that instead of the work: on the box's own branch, add the question with a recommendation to `docs/decisions.md` and add _needs decision: Name_ to the box, leave the box unchecked, and mark the PR ready with a title starting `[<ID>] Decision needed:`. Once it merges, the box waits for the decision to be settled, and the claim goes away with the branch. Then go back to step 1; this doesn't count as the session's box.
+6. If a box turns out to need a decision from the user, land that instead of the work: on the box's own branch, add the question with a recommendation to `docs/decisions.md` (`.agents/decisions.md` if it is about process) and add _needs decision: Name_ to the box, leave the box unchecked, and mark the PR ready with a title starting `[<ID>] Decision needed:`. Once it merges, the box waits for the decision to be settled, and the claim goes away with the branch. Then go back to step 1; this doesn't count as the session's box.
 
-If a box turns out too big for one session, split it in `PLAN.md` within its PR: the part being landed keeps the ID, the rest get suffixed IDs (`P1.2a`, `P1.2b`) that need `P1.2` unless they truly don't. Never renumber or reuse an ID.
+If a box turns out too big for one session, split it in `.agents/PLAN.md` within its PR: the part being landed keeps the ID, the rest get suffixed IDs (`P1.2a`, `P1.2b`) that need `P1.2` unless they truly don't. Never renumber or reuse an ID.
 
 ## Proposals: changing the plan
 
-The plan changes through proposal PRs, kept apart from box work, so the user can take or leave each idea on its own and no idea rides in with a box's code. A box PR touches `PLAN.md` only to check its own box or to split it.
+The plan changes through proposal PRs, kept apart from box work, so the user can take or leave each idea on its own and no idea rides in with a box's code. A box PR touches `.agents/PLAN.md` only to check its own box or to split it.
 
 - **Record it the moment it turns up.** When the work shows a reason to do something differently (a box that's wrong or missing a need, a better approach, a design note that no longer fits what was built) or suggests a new feature, add a line to the **Proposals** list in the box's draft PR description right away, so it survives a cut-off. Don't change course on the box itself: finish it as written, or land a decision instead if it can't be done as written (step 6).
 - **File each one as its own PR** once the box PR is ready, one idea per PR so each can be merged or closed alone. A session that resumes a box files any proposals the earlier session listed but didn't get to.
@@ -41,12 +41,12 @@ The plan changes through proposal PRs, kept apart from box work, so the user can
   ```
 
   Open it ready, not draft, titled `[plan] <summary>`. Its description says what turned it up (which box, what was seen) and what it would change. Then replace the line in the box PR's Proposals list with a link to it.
-- **What a proposal may change:** `PLAN.md`, `docs/decisions.md` and `docs/architecture.md`, never code. It can add boxes, reword or move unclaimed ones, change needs, or add an open question with a recommendation. It never checks a box, never deletes one (it proposes dropping it as a question in `docs/decisions.md` instead), never renumbers, and leaves claimed boxes alone (the suggestion goes in `docs/decisions.md`). A new feature that changes the design gets a line in `docs/architecture.md`; a big one gets a **design note** box rather than a design.
+- **What a proposal may change:** `.agents/PLAN.md`, `docs/decisions.md`, `.agents/decisions.md`, `docs/architecture.md` and process design notes under `.agents/design/`, never code. It can add boxes, reword or move unclaimed ones, change needs, or add an open question with a recommendation. It never checks a box, never deletes one (it proposes dropping it as a question in a decisions file instead), never renumbers, and leaves claimed boxes alone (the suggestion goes in `docs/decisions.md`, or `.agents/decisions.md` for process). A new feature that changes the design gets a line in `docs/architecture.md`; a big one gets a **design note** box rather than a design.
 - **New box IDs** take the next unused number in their phase, counting `main` and every open box and proposal branch, so two open proposals don't hand out the same ID. Right before pushing, for phase 2:
 
   ```
   git fetch --prune origin '+refs/heads/main:refs/remotes/origin/main' '+refs/heads/box/*:refs/remotes/origin/box/*' '+refs/heads/plan/*:refs/remotes/origin/plan/*'
-  git grep -h -o -E '\*\*P2\.[0-9]+' $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/main refs/remotes/origin/box/ refs/remotes/origin/plan/) -- PLAN.md | sort -t. -k2 -n -u | tail -1
+  git grep -h -o -E '\*\*P2\.[0-9]+' $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/main refs/remotes/origin/box/ refs/remotes/origin/plan/) -- .agents/PLAN.md | sort -t. -k2 -n -u | tail -1
   ```
 
   That prints the highest ID in use; take the next one.

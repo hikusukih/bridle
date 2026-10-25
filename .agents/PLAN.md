@@ -1,17 +1,17 @@
 # Plan
 
-The work queue. Read `CLAUDE.md` first: it says how a session picks, claims and finishes a box. The design lives in `docs/architecture.md`; open questions and settled answers live in `docs/decisions.md`.
+The work queue. Read `CLAUDE.md` first: it says how a session picks, claims and finishes a box. The design lives in `docs/architecture.md`; open questions and settled answers live in `docs/decisions.md` (product) and `.agents/decisions.md` (process).
 
 Every box is sized for one short session and lands as one PR. A box marked **design note** produces a document under `docs/design/` and nothing else.
 
-A box marked **review** closes each phase. Its PR follows the proposal rules in `CLAUDE.md` (plan and docs only, no code) and also checks its own box. It compares the plan with what the phase actually built, fixes later boxes whose needs, sizing or wording no longer fit, splits the next phase's boxes down to one-session size, and adds boxes for gaps the phase turned up. It adds boxes only as far ahead as there is evidence for, mostly the next phase. It reads the open `[plan]` PRs first so it doesn't duplicate them. A box it thinks should go becomes a question in `docs/decisions.md`.
+A box marked **review** closes each phase. Its PR follows the proposal rules in `CLAUDE.md` (plan and docs only, no code) and also checks its own box. It compares the plan with what the phase actually built, fixes later boxes whose needs, sizing or wording no longer fit, splits the next phase's boxes down to one-session size, and adds boxes for gaps the phase turned up. It adds boxes only as far ahead as there is evidence for, mostly the next phase. It reads the open `[plan]` PRs first so it doesn't duplicate them. A box it thinks should go becomes a question in `docs/decisions.md`, or `.agents/decisions.md` if it is about process.
 
 ## Box IDs and needs
 
 - Every box starts with an ID such as **P1.2**. An ID never changes and is never reused, even if the box is reworded, moved or split. Order in this file comes from position, not from the ID: a box added later takes the next unused number in its phase and goes wherever it belongs.
 - Every box ends with what it needs, such as _needs P1.1, P1.3_. A box is free to take only when every ID it needs is checked on `main`. Boxes are checked inside their own PR, so checked on `main` means merged.
 - _needs nothing_ means the box can be taken now. _needs every box above_ means every box above it in this file. A box with no needs written needs the box directly above it.
-- _needs decision: Name_ means the box waits until the decision called Name is under Settled in `docs/decisions.md` on `main`.
+- _needs decision: Name_ means the box waits until the decision called Name is under Settled in `docs/decisions.md` or `.agents/decisions.md` on `main`.
 - Boxes that implement a design note list the note's ID in their needs, so a note only holds up the work that depends on it.
 - A blank line separates boxes, so two PRs checking off neighboring boxes merge without a conflict.
 
@@ -21,7 +21,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P0.2** CI: a GitHub Actions workflow running lint, tests and build on every PR, plus gitleaks over the full history. _needs P0.1_
 
-- [ ] **P0.6** Move the process docs into `.agents/`, so how agents are managed is kept apart from the product: `PLAN.md`, the process entries of `docs/decisions.md` (product decisions such as the stack stay in `docs/`), `docs/design/slots.md`, and `docs/ops/` if P0.4 has landed. `CLAUDE.md` stays at the root, where sessions read it; update its paths and fetch commands, the paths it lets a `[plan]` PR change (adding process design notes under `.agents/`, so a scheduling note can ride in a `[plan]` PR), and every other reference. Open box branches still carry the old paths, so the PR says how a resuming session merges main. _needs nothing_
+- [x] **P0.6** Move the process docs into `.agents/`, so how agents are managed is kept apart from the product: `PLAN.md`, the process entries of `docs/decisions.md` (product decisions such as the stack stay in `docs/`), `docs/design/slots.md`, and `docs/ops/` if P0.4 has landed. `CLAUDE.md` stays at the root, where sessions read it; update its paths and fetch commands, the paths it lets a `[plan]` PR change (adding process design notes under `.agents/`, so a scheduling note can ride in a `[plan]` PR), and every other reference. Open box branches still carry the old paths, so the PR says how a resuming session merges main. _needs nothing_
 
 - [x] **P0.3** `LICENSE` (MIT), `.editorconfig`, a Dockerfile that builds and serves the app, and a `README.md` quickstart that has actually been run. _needs P0.1_
 
