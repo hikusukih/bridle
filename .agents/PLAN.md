@@ -53,7 +53,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P2.2** Adapters: OpenAI-compatible chat completions and the Anthropic Messages API, both with streaming and tool calls, passing the contract suite against recorded fixtures so CI needs no key. _needs P1.2, P1.3_
 
-- [ ] **P2.2a** Model choice per channel, keys from environment variables: a model setting on each channel, the server building the adapter from configuration, and the channel view showing which model it uses. `npm run evals -- --live` builds its model from the same configuration and drops `BRIDLE_EVAL_MODEL_MODULE`. _needs P2.2, P1.8, P2.5_
+- [ ] **P2.2a** Model choice per channel, keys from environment variables: a model setting on each channel, the server building the adapter from configuration, and the channel view showing which model it uses. `npm run evals -- --live` builds its model from the same configuration and drops `BRINDLE_EVAL_MODEL_MODULE`. _needs P2.2, P1.8, P2.5_
 
 - [ ] **P2.3** Tools: the registry, `web_fetch` and `web_search`, with the approval card for external-effect tools (none of the first tools need it, but the path exists and is tested). _needs P2.1, P1.4_
 
