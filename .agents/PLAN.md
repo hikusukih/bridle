@@ -61,7 +61,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P2.5** Evals: the `evals/` runner, one scenario format, CI running all scenarios against the scripted model, and a manual command to run them against a real model. _needs P1.4, P0.2_
 
-- [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.5_
+- [ ] **P2.7** Authentication: a login token set through an environment variable or generated and printed once at first start; every `/api` route except the health check answers 401 without it; the client asks for it once and keeps it for the session; the README's "no login yet" warning is replaced by how the token works. The token travels in an `Authorization` header, never a cookie, so a hostile page cannot ride the browser's state, and the server compares it in constant time. _needs P1.8_
+
+- [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.5, P2.7_
 
 ## Phase 3 — long channels stay useful
 
@@ -101,7 +103,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P5.2** The feed screen with mark-read and per-goal filtering. _needs P5.1, P1.1_
 
-- [ ] **P5.3** Atom feeds, overall and per goal, behind the token, and verified in a real RSS reader. _needs P5.1_
+- [ ] **P5.3** Atom feeds, overall and per goal, behind the token, and verified in a real RSS reader. _needs P5.1, P2.7_
 
 - [ ] **P5.4** Acceptance: a goal watching a public events-listing page fills the feed, a re-run adds only new entries, and the Atom feed shows them on a phone. _needs P5.2, P5.3, P2.3_
 
@@ -111,7 +113,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P6.1** **Design note and threat model:** the vault's API, encryption and master-key handling, handles and how tools resolve them, scope rules, output scrubbing, the credential request flow, auditing, and the attacks the red-team suite must cover. Reviewed with extra care before anything is built. _needs P2.1_
 
-- [ ] **P6.2** The vault: encrypted storage, the narrow API, master key outside the database, unit tests. _needs P6.1_
+- [ ] **P6.2** The vault: encrypted storage, the narrow API, master key outside the database, unit tests. _needs P6.1, P2.7_
 
 - [ ] **P6.3** Handles and scoped resolution inside tools, with refusal of out-of-scope hosts and tools, and the audit log. _needs P6.2, P2.3_
 
