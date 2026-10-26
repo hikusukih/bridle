@@ -11,12 +11,12 @@ export function modelFromEnv(
   env: Record<string, string | undefined>,
   readFixture: (path: string) => string = (path) => readFileSync(path, "utf8"),
 ): ModelAdapter | undefined {
-  const name = env.BRIDLE_MODEL?.trim();
+  const name = env.BRINDLE_MODEL?.trim();
   if (!name) return undefined;
-  if (name !== "scripted") throw new Error(`BRIDLE_MODEL "${name}" is not supported yet; use "scripted".`);
+  if (name !== "scripted") throw new Error(`BRINDLE_MODEL "${name}" is not supported yet; use "scripted".`);
 
-  const path = env.BRIDLE_SCRIPTED_FIXTURE?.trim();
-  if (!path) throw new Error("BRIDLE_MODEL=scripted needs BRIDLE_SCRIPTED_FIXTURE, the path to a fixture JSON file.");
+  const path = env.BRINDLE_SCRIPTED_FIXTURE?.trim();
+  if (!path) throw new Error("BRINDLE_MODEL=scripted needs BRINDLE_SCRIPTED_FIXTURE, the path to a fixture JSON file.");
   const fixture = JSON.parse(readFixture(path)) as ScriptedFixture;
   if (!Array.isArray(fixture?.turns)) throw new Error(`${path} is not a scripted fixture: expected a "turns" array.`);
   return new ScriptedModel(fixture);
