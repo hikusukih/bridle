@@ -11,6 +11,7 @@ const channel = (id: string, name: string, archivedAt: string | null = null): Ch
   createdAt: stamp,
   updatedAt: stamp,
   archivedAt,
+  model: null,
 });
 
 // Stands in for the browser's EventSource; a test pushes events through the most recent instance.
@@ -192,6 +193,24 @@ describe("channel view", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("The model could not be reached.");
     expect(screen.getByText("hi")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
+  });
+
+  it("shows which model the channel uses and lets the user set one", async () => {
+    window.location.hash = "#/channels/c1";
+    const calls = stubFetch({
+      "/api/models": () => Response.json({ default: "openai:gpt-test" }),
+      "/api/channels": () => Response.json([channel("c1", "Plans")]),
+      "/api/channels/c1/runs": () => Response.json([]),
+      "/api/channels/c1/model": (_m, body) =>
+        Response.json({ ...channel("c1", "Plans"), model: (body as { model: string | null }).model }),
+    });
+    render(<ChannelsScreen />);
+    expect(await screen.findByText("Model: openai:gpt-test (default)")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Model for this channel"), { target: { value: "anthropic:claude-test" } });
+    fireEvent.click(screen.getByRole("button", { name: "Set model" }));
+    expect(await screen.findByText("Model: anthropic:claude-test")).toBeTruthy();
+    expect(calls).toContain("POST /api/channels/c1/model");
   });
 
   it("is read-only when the channel is archived", async () => {

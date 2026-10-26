@@ -37,9 +37,19 @@ npm start
 
 Open `http://127.0.0.1:8787`. Data lives in `./data` unless `BRIDLE_DATA_DIR` says otherwise; `PORT` and `HOST` change where it listens (loopback by default).
 
+### Choosing a model
+
+Set `BRIDLE_MODEL` to the default model, written `provider:name`: `openai:<model>`, `anthropic:<model>` or `scripted`. Keys come from the environment only: `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`. To reach a local OpenAI-compatible server such as Ollama, set `BRIDLE_OPENAI_BASE_URL` (for example `http://127.0.0.1:11434/v1`), and no key is needed. `BRIDLE_ANTHROPIC_BASE_URL` overrides the Anthropic endpoint.
+
+```sh
+OPENAI_API_KEY=... BRIDLE_MODEL=openai:<model> npm start
+```
+
+Each channel shows the model it uses under its name, and a channel can be set to a different one with the same `provider:name` spelling; clearing the field returns it to the default. A model whose key is missing is refused when you set it. With no default and no choice on the channel, sending a message answers 503.
+
 ### Trying runs with the scripted model
 
-Until the real model adapters land, set `BRIDLE_MODEL=scripted` and `BRIDLE_SCRIPTED_FIXTURE` to a JSON file of canned turns to make sending a message work. Without `BRIDLE_MODEL`, starting a run answers 503.
+For development and acceptance without a key, set `BRIDLE_MODEL=scripted` and `BRIDLE_SCRIPTED_FIXTURE` to a JSON file of canned turns.
 
 ```sh
 cat > fixture.json <<'JSON'

@@ -20,12 +20,15 @@ export const defaultLimits: RunLimits = { maxSteps: 10, maxTokens: 100_000, maxM
 
 export class RunError extends Error {
   constructor(
-    readonly code: "not_found" | "busy" | "invalid_text" | "finished",
+    readonly code: "not_found" | "busy" | "invalid_text" | "finished" | "no_model",
     message: string,
   ) {
     super(message);
   }
 }
+
+/** One adapter for every channel, or a function that picks by the channel's model spec (null: the default). */
+export type ModelSource = ModelAdapter | ((spec: string | null) => ModelAdapter);
 
 export type RunWithEvents = Run & { events: RunEvent[] };
 
@@ -58,7 +61,7 @@ export class RunEngine {
 
   constructor(
     private readonly db: Db,
-    private readonly model: ModelAdapter,
+    private readonly model: ModelSource,
     private readonly limits: RunLimits = defaultLimits,
   ) {}
 
@@ -81,6 +84,12 @@ export class RunEngine {
     if (running.some((r) => r.status === "running"))
       throw new RunError("busy", "This channel is still working on a message.");
 
+    let model: ModelAdapter;
+    try {
+      model = typeof this.model === "function" ? this.model(channel.model) : this.model;
+    } catch (err) {
+      throw new RunError("no_model", (err as Error).message);
+    }
     const history = this.history(channelId);
     const run: Run = {
       id: randomUUID(),
@@ -95,7 +104,7 @@ export class RunEngine {
 
     const controller = new AbortController();
     this.active.set(run.id, controller);
-    this.settled.set(run.id, this.loop(run.id, [...history, { role: "user", content: message }], controller));
+    this.settled.set(run.id, this.loop(run.id, model, [...history, { role: "user", content: message }], controller));
     return run;
   }
 
@@ -168,7 +177,12 @@ export class RunEngine {
     return messages;
   }
 
-  private async loop(runId: string, messages: Message[], controller: AbortController): Promise<void> {
+  private async loop(
+    runId: string,
+    model: ModelAdapter,
+    messages: Message[],
+    controller: AbortController,
+  ): Promise<void> {
     const { maxSteps, maxTokens, maxMillis } = this.limits;
     const timer = setTimeout(() => controller.abort(new TimeLimit()), maxMillis);
     let tokens = 0;
@@ -177,7 +191,7 @@ export class RunEngine {
         let text = "";
         const calls: ToolCall[] = [];
         let stop: string | undefined;
-        for await (const ev of this.model.stream({ messages: [...messages], signal: controller.signal })) {
+        for await (const ev of model.stream({ messages: [...messages], signal: controller.signal })) {
           if (ev.type === "text") text += ev.text;
           else if (ev.type === "tool_call") calls.push(ev.call);
           else {

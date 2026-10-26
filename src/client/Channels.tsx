@@ -200,6 +200,8 @@ function ChannelView({ id }: { id: string }) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [text, setText] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
+  const [defaultModel, setDefaultModel] = useState<string | null>(null);
+  const [modelText, setModelText] = useState("");
   const source = useRef<EventSource | null>(null);
 
   const reload = useCallback(async () => {
@@ -208,6 +210,9 @@ function ChannelView({ id }: { id: string }) {
 
   useEffect(() => {
     setChannel(null);
+    api<{ default: string | null }>("/api/models")
+      .then((m) => setDefaultModel(m.default))
+      .catch(() => {});
     api<Channel[]>("/api/channels")
       .then(async (active) => {
         const found =
@@ -273,6 +278,16 @@ function ChannelView({ id }: { id: string }) {
     }
   };
 
+  const chooseModel = async (model: string | null) => {
+    try {
+      setChannel(await api<Channel>(`/api/channels/${id}/model`, { method: "POST", body: { model } }));
+      setModelText("");
+      setProblem(null);
+    } catch (err) {
+      setProblem((err as Error).message);
+    }
+  };
+
   const running = runs.find((r) => r.status === "running");
   const readOnly = channel?.archivedAt != null;
 
@@ -282,6 +297,31 @@ function ChannelView({ id }: { id: string }) {
         ← All channels
       </a>
       <h1 className="text-2xl font-semibold">{channel?.name ?? "Channel"}</h1>
+      {channel && (
+        <div className="flex flex-col gap-2 text-sm text-slate-600">
+          <p>Model: {channel.model ?? (defaultModel ? `${defaultModel} (default)` : "none configured")}</p>
+          {!readOnly && (
+            <form
+              className="flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                chooseModel(modelText.trim() || null);
+              }}
+            >
+              <input
+                aria-label="Model for this channel"
+                placeholder="provider:name, such as openai:gpt-4o"
+                value={modelText}
+                onChange={(e) => setModelText(e.target.value)}
+                className="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-300 px-3"
+              />
+              <button type="submit" className={quiet}>
+                {modelText.trim() ? "Set model" : "Use default"}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
       <div className="flex flex-col gap-4">
         {runs.map((run) => (
           <section key={run.id} aria-label="Run" className="flex flex-col gap-2">

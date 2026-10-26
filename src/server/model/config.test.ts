@@ -1,26 +1,50 @@
 import { describe, expect, it } from "vitest";
-import { modelFromEnv } from "./config.js";
+import { AnthropicAdapter } from "./anthropic.js";
+import { ModelConfigError, modelRegistry } from "./config.js";
+import { OpenAiAdapter } from "./openai.js";
 import { ScriptedModel } from "./scripted.js";
 
 const fixture = JSON.stringify({ turns: [{ text: ["hi"] }] });
 
-describe("modelFromEnv", () => {
-  it("returns nothing when no model is configured", () => {
-    expect(modelFromEnv({})).toBeUndefined();
-    expect(modelFromEnv({ BRIDLE_MODEL: " " })).toBeUndefined();
+describe("modelRegistry", () => {
+  it("has no default when none is configured, and refuses to resolve one", () => {
+    expect(modelRegistry({}).defaultSpec).toBeUndefined();
+    expect(modelRegistry({ BRIDLE_MODEL: " " }).defaultSpec).toBeUndefined();
+    expect(() => modelRegistry({}).resolve(null)).toThrow(/No model is configured/);
   });
 
-  it("loads the scripted model from the fixture path", () => {
-    const model = modelFromEnv({ BRIDLE_MODEL: "scripted", BRIDLE_SCRIPTED_FIXTURE: "turns.json" }, (path) => {
+  it("loads the scripted model from the fixture path, once per registry", () => {
+    const registry = modelRegistry({ BRIDLE_MODEL: "scripted", BRIDLE_SCRIPTED_FIXTURE: "turns.json" }, (path) => {
       expect(path).toBe("turns.json");
       return fixture;
     });
-    expect(model).toBeInstanceOf(ScriptedModel);
+    expect(registry.resolve(null)).toBeInstanceOf(ScriptedModel);
+    expect(registry.resolve("scripted")).toBe(registry.resolve(null));
   });
 
-  it("fails loudly on a missing path, a bad fixture or an unknown model", () => {
-    expect(() => modelFromEnv({ BRIDLE_MODEL: "scripted" })).toThrow(/BRIDLE_SCRIPTED_FIXTURE/);
-    expect(() => modelFromEnv({ BRIDLE_MODEL: "scripted", BRIDLE_SCRIPTED_FIXTURE: "x" }, () => "{}")).toThrow(/turns/);
-    expect(() => modelFromEnv({ BRIDLE_MODEL: "gpt" })).toThrow(/not supported/);
+  it("builds provider adapters from specs, with keys only from the environment", () => {
+    const registry = modelRegistry({
+      OPENAI_API_KEY: "sk-test-1234abcd1234abcd",
+      ANTHROPIC_API_KEY: "sk-test-1234abcd1234abcd",
+    });
+    expect(registry.resolve("openai:gpt-test")).toBeInstanceOf(OpenAiAdapter);
+    expect(registry.resolve("anthropic:claude-test")).toBeInstanceOf(AnthropicAdapter);
+  });
+
+  it("lets a local OpenAI-compatible server go without a key", () => {
+    expect(
+      modelRegistry({ BRIDLE_OPENAI_BASE_URL: "http://127.0.0.1:11434/v1" }).resolve("openai:llama"),
+    ).toBeInstanceOf(OpenAiAdapter);
+  });
+
+  it("fails loudly on a missing key or path, a bad fixture or an unknown model", () => {
+    expect(() => modelRegistry({ BRIDLE_MODEL: "scripted" })).toThrow(/BRIDLE_SCRIPTED_FIXTURE/);
+    expect(() => modelRegistry({ BRIDLE_MODEL: "scripted", BRIDLE_SCRIPTED_FIXTURE: "x" }, () => "{}")).toThrow(
+      /turns/,
+    );
+    expect(() => modelRegistry({ BRIDLE_MODEL: "gpt" })).toThrow(ModelConfigError);
+    expect(() => modelRegistry({}).validate("anthropic:claude-test")).toThrow(/ANTHROPIC_API_KEY/);
+    expect(() => modelRegistry({}).validate("openai:gpt-test")).toThrow(/OPENAI_API_KEY/);
+    expect(() => modelRegistry({}).validate("openai:")).toThrow(/not a supported model/);
   });
 });
