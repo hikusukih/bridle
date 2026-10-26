@@ -75,7 +75,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.5** Drift nudge, with "move the last few messages to a new channel". _needs P3.3_
 
-- [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5_
+- [ ] **P3.7** `search_history`: a `read` tool that finds passages in the channel's full stored transcript, including turns compaction has folded away, and returns them verbatim with the run they came from, cut by the usual result sizing. The compaction summary tells the model it exists. _needs P3.4, P2.3_
+
+- [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5, P3.7_
 
 ## Phase 4 — goals and the scheduler
 
@@ -93,7 +95,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P4.7** Acceptance: "learn Rust" produces a curriculum held in the goal's state document, visible in the gallery, and a later lesson updates its progress. _needs P4.2, P4.4, P4.5, P2.2_
 
-- [ ] **P4.8** **Review** of Phase 4. _needs P4.1, P4.2, P4.3, P4.4, P4.5, P4.6, P4.7_
+- [ ] **P4.9** `propose_goal`: from a conversation the model drafts a goal (title, brief, optionally a schedule) as a card the user edits and confirms before anything is created, never creating one itself; with an eval scenario where a chat about learning Rust yields a sensible draft. _needs P4.3, P4.5_
+
+- [ ] **P4.8** **Review** of Phase 4. _needs P4.1, P4.2, P4.3, P4.4, P4.5, P4.6, P4.7, P4.9_
 
 ## Phase 5 — the feed
 
@@ -105,7 +109,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P5.4** Acceptance: a goal watching a public events-listing page fills the feed, a re-run adds only new entries, and the Atom feed shows them on a phone. _needs P5.2, P5.3, P2.3_
 
-- [ ] **P5.5** **Review** of Phase 5. _needs P5.1, P5.2, P5.3, P5.4_
+- [ ] **P5.6** `read_feed`: a `read` tool that lets a goal run list recent feed items (title, summary, link, date, read state), so a run can build on what earlier runs found instead of rediscovering it; with an eval scenario where a second run does not repeat the first run's items. _needs P5.1, P2.3_
+
+- [ ] **P5.5** **Review** of Phase 5. _needs P5.1, P5.2, P5.3, P5.4, P5.6_
 
 ## Phase 6 — the key manager
 
