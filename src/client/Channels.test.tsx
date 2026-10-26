@@ -194,6 +194,53 @@ describe("channel view", () => {
     expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
   });
 
+  it("shows an approval card for an external tool and sends the decision", async () => {
+    window.location.hash = "#/channels/c1";
+    const calls = stubFetch({
+      "/api/channels": () => Response.json([channel("c1", "Plans")]),
+      "/api/channels/c1/runs": () =>
+        Response.json([
+          run("waiting", null, [
+            event(1, "message", { text: "mail it" }),
+            event(2, "approval_request", {
+              callId: "k1",
+              tool: "send_email",
+              reason: "Send an email to Sam",
+              arguments: { to: "sam@example.com" },
+            }),
+          ]),
+        ]),
+      "/api/runs/r1/approvals/k1": (_m, body) => {
+        expect(body).toEqual({ decision: "approve" });
+        return Response.json({});
+      },
+    });
+    render(<ChannelsScreen />);
+    expect(await screen.findByText("Send an email to Sam")).toBeTruthy();
+    expect(screen.getByText(/sam@example.com/)).toBeTruthy();
+    // A waiting run keeps the channel busy, so the message box offers Cancel rather than Send.
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    await waitFor(() => expect(calls).toContain("POST /api/runs/r1/approvals/k1"));
+  });
+
+  it("shows a settled approval as answered, without buttons", async () => {
+    window.location.hash = "#/channels/c1";
+    stubFetch({
+      "/api/channels": () => Response.json([channel("c1", "Plans")]),
+      "/api/channels/c1/runs": () =>
+        Response.json([
+          run("done", null, [
+            event(1, "approval_request", { callId: "k1", tool: "send_email", reason: "Send it", arguments: {} }),
+            event(2, "approval_decision", { callId: "k1", decision: "decline" }),
+          ]),
+        ]),
+    });
+    render(<ChannelsScreen />);
+    expect(await screen.findByText("Declined.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+  });
+
   it("is read-only when the channel is archived", async () => {
     window.location.hash = "#/channels/c1";
     stubFetch({
