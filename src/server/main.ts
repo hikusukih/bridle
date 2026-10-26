@@ -6,6 +6,7 @@ import { createApp, recordFirstStart } from "./app.js";
 import { openDatabase } from "./db/index.js";
 import { modelFromEnv } from "./model/config.js";
 import { RunEngine } from "./runs.js";
+import { builtInTools } from "./tools/index.js";
 
 const dataDir = resolve(process.env.BRIDLE_DATA_DIR ?? "data");
 // Single user and no auth yet, so stay on loopback unless the operator says otherwise.
@@ -20,7 +21,7 @@ recordFirstStart(db);
 const builtClient = fileURLToPath(new URL("../../dist/client", import.meta.url));
 // Only the scripted model exists until P2.2; with no model configured, starting a run answers 503.
 const model = modelFromEnv(process.env);
-const engine = model ? new RunEngine(db, model) : undefined;
+const engine = model ? new RunEngine(db, model, undefined, builtInTools(process.env)) : undefined;
 const recovered = engine?.recoverInterrupted() ?? 0;
 if (recovered > 0) console.log(`Marked ${recovered} interrupted run(s) as failed.`);
 const app = createApp({ db, engine, clientRoot: existsSync(builtClient) ? builtClient : undefined });

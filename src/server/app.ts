@@ -47,7 +47,8 @@ export function createApp({ db, engine, clientRoot }: AppOptions) {
       return c.json({ error: err.code, message: err.message }, status);
     }
     if (err instanceof RunError) {
-      const status = err.code === "not_found" ? 404 : err.code === "invalid_text" ? 400 : 409;
+      const status =
+        err.code === "not_found" ? 404 : err.code === "invalid_text" || err.code === "invalid_decision" ? 400 : 409;
       return c.json({ error: err.code, message: err.message }, status);
     }
     if (err instanceof HTTPException) return err.getResponse();
@@ -65,6 +66,10 @@ export function createApp({ db, engine, clientRoot }: AppOptions) {
     return c.json(needEngine().start(c.req.param("id"), body.text), 201);
   });
   app.get("/api/runs/:id", (c) => c.json(needEngine().get(c.req.param("id"))));
+  app.post("/api/runs/:id/approvals/:callId", async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as { decision?: unknown };
+    return c.json(needEngine().decide(c.req.param("id"), c.req.param("callId"), body.decision));
+  });
   app.post("/api/runs/:id/cancel", (c) => c.json(needEngine().cancel(c.req.param("id"))));
 
   // Replays stored events, then follows the live run. A reconnecting client sends Last-Event-ID (the last seq it saw).
