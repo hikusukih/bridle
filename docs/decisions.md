@@ -5,6 +5,7 @@ Open questions first, each with a recommendation. A session that hits a question
 ## Open
 
 - **Text-to-speech provider.** Recommend an OpenAI-compatible speech endpoint, so a local TTS server and a hosted one are interchangeable.
+- **The optional cost budget on runs.** `docs/architecture.md` promises "an optional cost budget" beside the step, token and time limits, but no box implements it and the run engine has no notion of price. Recommend dropping the words from the architecture until a real need shows up, and relying on the token limit (which the engine enforces today) for scheduled work; a price needs a per-model rate table that goes stale. If the user wants it, add a box after P2.2a that takes a rate per million tokens in model configuration and stops a run as "cost limit reached".
 - **Master key for the vault.** Recommend a key file outside the data directory with owner-only permissions, its path set by an environment variable, with an OS keychain as a later option. Decided in the Phase 6 design note.
 
 ## Settled
