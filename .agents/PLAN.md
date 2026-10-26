@@ -109,7 +109,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 ## Phase 6 — the key manager
 
-- [ ] **P6.1** **Design note and threat model:** the vault's API, encryption and master-key handling, handles and how tools resolve them, scope rules, output scrubbing, the credential request flow, auditing, and the attacks the red-team suite must cover. Reviewed with extra care before anything is built. _needs P2.1_
+- [x] **P6.1** **Design note and threat model:** the vault's API, encryption and master-key handling, handles and how tools resolve them, scope rules, output scrubbing, the credential request flow, auditing, and the attacks the red-team suite must cover. Reviewed with extra care before anything is built. _needs P2.1_
 
 - [ ] **P6.2** The vault: encrypted storage, the narrow API, master key outside the database, unit tests. _needs P6.1_
 
