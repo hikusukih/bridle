@@ -1,6 +1,6 @@
 # Design note and threat model: the key manager
 
-Box P6.1. Status: proposed. Nothing under Phase 6 is built until this is merged, and this note deserves the slowest review in the repository: the user reviews the ideas here, and every later box in this phase is held to what this note says.
+Box P6.1. Status: proposed. Nothing under Phase 6 is built until this is merged, and this note deserves the slowest review in the repository: the user reviews the ideas here, and every later box in this phase is held to what this note says. It depends on box P2.7, authentication (#37): the vault's endpoints and the credential form assume the user is logged in.
 
 ## Problem
 
@@ -74,7 +74,7 @@ A user message is checked before it is stored or sent to the model for known sec
 
 ### The web surface
 
-Vault endpoints exist only behind authentication. **The project has no login yet** (the README says so, and `docs/architecture.md` assumes "a login token"), and no box builds it; this phase cannot start without one, and a `[plan]` PR proposes it. Vault requests carry the token in a header, not a cookie, so a hostile page cannot ride the user's browser state. The UI is served with a strict Content-Security-Policy (no inline script, `default-src 'self'`, `frame-ancestors 'none'`); model output is rendered as text, never HTML; HTML artifacts are served sandboxed so their scripts cannot reach the vault origin.
+Vault endpoints exist only behind authentication. **The project has no login yet** (the README says so, and `docs/architecture.md` assumes "a login token"), and on `main` no box builds it yet. This phase cannot start without one: it depends on box P2.7 (authentication, proposed in #37), and P6.2 needs P2.7. Vault requests carry the token in a header, not a cookie, so a hostile page cannot ride the user's browser state. The UI is served with a strict Content-Security-Policy (no inline script, `default-src 'self'`, `frame-ancestors 'none'`); model output is rendered as text, never HTML; HTML artifacts are served sandboxed so their scripts cannot reach the vault origin.
 
 ### Audit
 
