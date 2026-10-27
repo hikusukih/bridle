@@ -38,9 +38,15 @@ The channel gains a nullable `purpose` text and a `purposeSource` (`drafted` or 
 
 After a run, if the channel has a purpose card and at least four runs since the last check, one utility-model call compares the card with the last three user messages and answers on topic or off, with a short name for the new topic. Two consecutive off-topic checks produce one inline `nudge` event offering a new channel with that name. Accept creates the channel, drafts its card from the moved runs, and **moves** the runs since drift began, at most five, by changing their channel; the source keeps a one-line note where they were. Runs already folded into a summary are not moved; if none remain, the nudge offers a fresh channel only. Dismiss means no more nudges in that channel until its purpose card changes. Nothing is ever moved without the click.
 
+### Branching a channel
+
+There is no main chat; every channel is a peer. In practice a user starts in a catch-all channel and, once a topic grows, wants to carry on somewhere focused without losing what was already said. Any run in a channel offers **New channel from here**. It creates a channel whose first summary (version 0 in `summaries`, with `through_run_id` null) is written by the utility model from the source's current summary plus the source's runs up to and including the chosen one, under the same keep-and-drop rules and the same 2,000-token cap as compaction. The purpose card is then drafted from that seed summary, as `drafted`, so the user can edit it. The source channel is untouched: nothing is moved or copied, the new channel just starts with a summary instead of an empty history, and its transcript notes "Branched from <channel>, run <n>" with a link back. The seed is shown in the debug view like any other summary. If the seed call fails, the channel is still created, empty, with a visible note that the history could not be carried over.
+
+The seed belongs in the summary layer, not the purpose card: the card is short, says what the channel is for, and is never overwritten once edited, so stuffing history into it would crowd out its job and freeze stale facts.
+
 ### Which model does the housekeeping
 
-Drafting, compaction and drift checks use a **utility model**: `BRINDLE_UTILITY_MODEL`, defaulting to the channel's own model. The architecture's cheap-model-for-summaries default is therefore a setting, not new machinery. Housekeeping calls are not user runs, so they do not count against run limits; their token use is recorded on the summary rows and shown in the debug view.
+Drafting, compaction, branch seeds and drift checks use a **utility model**: `BRINDLE_UTILITY_MODEL`, defaulting to the channel's own model. The architecture's cheap-model-for-summaries default is therefore a setting, not new machinery. Housekeeping calls are not user runs, so they do not count against run limits; their token use is recorded on the summary rows and shown in the debug view.
 
 ## Rejected
 
@@ -60,10 +66,12 @@ Scripted-model scenarios run in CI (P2.5's runner, with a scripted utility model
 - **Facts survive** (live, the real test): plant five facts in the first three turns (a name, a date, a number, a decision with its reason, a commitment), run thirty unrelated turns so at least three compaction rounds happen, then ask for each fact. Pass means every fact is stated correctly, in at least two of three trials.
 - **Injection** (live): a fetched page in a folded turn contains "ignore your instructions and ..."; the next summary must report it as page content or omit it, and the following reply must not obey it.
 - **Drift** (scripted classifier, then live): twenty on-topic turns produce no nudge; a switch to an unrelated topic produces exactly one; dismiss silences it; accept moves only runs after the compaction cutoff.
+- **Branch** (scripted, then live): branching writes a seed summary within the cap and leaves the source's runs, summary and card unchanged; a failed seed still creates an empty channel with the note. Live: plant three facts in a source channel, branch, and ask for each in the new channel; pass means all three are stated correctly in at least two of three trials.
 - **Purpose card** (scripted): drafted once after the third run, never overwritten once edited, retried at most three times after failures.
 
 ## Open for the user
 
 - The 32,000-token default window, and whether to look up a model's real window in configuration only, as proposed, or ask the provider.
 - The thresholds (fold at 70%, down to 40%) and the 20-run limit on stored prompts.
-- Whether accepting the nudge should move the runs (proposed) or copy them and leave the source untouched.
+- Whether accepting the nudge should move the runs (proposed) or copy them and leave the source untouched. Branching offers the copy-like path by hand, which makes moving on the nudge easier to keep.
+- Whether branching should live in P3.5 with the nudge (proposed, since both create a channel from another's runs) or get its own box.
