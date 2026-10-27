@@ -48,6 +48,8 @@ The feed collects items that scheduled runs produce for the user to skim: new li
 
 Anything a run produces as a file, an image, audio, a document or a link is an artifact, indexed in one gallery and linked back to the run and scope that made it. Goal state documents appear here too.
 
+**Reference documents** are living artifacts that belong to no single channel: a cast of characters (the people in the user's life and what to remember about each), contacts, and notes on topics the user keeps coming back to. Like a goal's state document they are versioned and editable by the user. They are not sent with every run: a run looks one up only when the user mentions a person or topic it covers, or the channel's purpose card does, and the request calls for it. The agent offers to add a durable fact ("Save this to People?") rather than writing it silently, and a change to a document the current channel did not create is confirmed by the user, because text from the web or a compromised model must not quietly rewrite what every channel reads.
+
 ## Suggestions
 
 A suggestion run, at most daily, reads goal briefs and states, channel purpose cards and recent activity, and proposes a few cards: a next step on a goal, a schedule that would help it, a new goal, or a login to connect so a goal can do more. Accepting a card turns it into a run, a goal, a schedule or a credential request. Dismissed cards are remembered and don't come back. Suggestions can be turned off.

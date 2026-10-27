@@ -75,6 +75,8 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.5** Drift nudge, with "move the last few messages to a new channel". _needs P3.3_
 
+- [ ] **P3.9** **Design note:** reference documents shared across channels (a cast of characters, contacts, topic notes) as living, versioned artifacts. The note settles: how they are stored next to goal state documents and artifacts; when a run looks one up (the user names a person or topic, or the purpose card does, and the request calls for it) and how a large one is read in part rather than whole; how the agent offers "Save this to People?" and how often; which writes need the user's confirmation (proposed: any change to a document the current channel did not create); and the injection cases (a fetched page or a compromised model trying to plant or rewrite an entry). With eval scenarios. _needs P3.1, P2.4_
+
 - [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5_
 
 ## Phase 4 — goals and the scheduler
