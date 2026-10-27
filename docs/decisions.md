@@ -5,7 +5,7 @@ Open questions first, each with a recommendation. A session that hits a question
 ## Open
 
 - **Text-to-speech provider.** Recommend an OpenAI-compatible speech endpoint, so a local TTS server and a hosted one are interchangeable.
-- **Web search provider.** Recommend a self-hosted SearXNG-style JSON endpoint named by an environment variable, with `web_search` registered only when it is set, because it needs no key and nothing about the user's queries goes to a third party by default. A hosted API (Brave, Tavily and the like) can be added later as a second backend behind the same tool if SearXNG proves unreliable. Box P2.3 lands this as `BRIDLE_SEARCH_URL`; closing this question confirms it.
+- **Web search provider.** Recommend a self-hosted SearXNG-style JSON endpoint named by an environment variable, with `web_search` registered only when it is set, because it needs no key and nothing about the user's queries goes to a third party by default. A hosted API (Brave, Tavily and the like) can be added later as a second backend behind the same tool if SearXNG proves unreliable. Box P2.3 lands this as `BRINDLE_SEARCH_URL`; closing this question confirms it.
 - **Master key for the vault.** Recommend a key file outside the data directory with owner-only permissions, its path set by an environment variable, with an OS keychain as a later option. Decided in the Phase 6 design note.
 
 ## Settled
