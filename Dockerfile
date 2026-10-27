@@ -12,7 +12,7 @@ WORKDIR /app
 # Loopback inside a container is unreachable from the host, so listen on all interfaces here and let the
 # operator's -p flag decide what is exposed.
 ENV NODE_ENV=production \
-    BRIDLE_DATA_DIR=/data \
+    BRINDLE_DATA_DIR=/data \
     PORT=8787 \
     HOST=0.0.0.0
 COPY --from=build /app/package.json ./

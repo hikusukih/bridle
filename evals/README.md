@@ -6,4 +6,4 @@ CI runs every scenario against the scripted model as part of `npm test` (`evals.
 
 To run them by hand: `npm run evals`, optionally with a name filter (`npm run evals -- step-limit`).
 
-To run them against a real model, which costs money and is worth doing when a harness change could move the results: set `BRIDLE_EVAL_MODEL_MODULE` to a module whose default export is a function returning a `ModelAdapter`, then `npm run evals -- --live`. The script is ignored in live mode, so write expectations that any reasonable reply satisfies. Once the adapters and per-channel model choice land (P2.2, P2.2a), a built-in way to pick a model can replace the module.
+To run them against a real model, which costs money and is worth doing when a harness change could move the results: set `BRINDLE_EVAL_MODEL_MODULE` to a module whose default export is a function returning a `ModelAdapter`, then `npm run evals -- --live`. The script is ignored in live mode, so write expectations that any reasonable reply satisfies. Once the adapters and per-channel model choice land (P2.2, P2.2a), a built-in way to pick a model can replace the module.

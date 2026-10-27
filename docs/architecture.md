@@ -1,6 +1,6 @@
 # Architecture
 
-Bridle is a self-hosted personal agent: a harness that runs work for one person, and a phone-friendly web app over it. Five surfaces sit on top: **channels**, **goals**, the **feed**, **artifacts**, and **suggestions**. Underneath them all is one primitive, the **run**.
+Brindle is a self-hosted personal agent: a harness that runs work for one person, and a phone-friendly web app over it. Five surfaces sit on top: **channels**, **goals**, the **feed**, **artifacts**, and **suggestions**. Underneath them all is one primitive, the **run**.
 
 Most of the work is the harness, not the UI. The UI is standard; how context is assembled, how long conversations stay useful, how goals keep state and act on a schedule, and how credentials are kept away from the model are the parts that decide whether this is any good. Those parts are designed in short notes under `docs/design/` and reviewed before they are built (see `CLAUDE.md`).
 
@@ -54,10 +54,10 @@ A suggestion run, at most daily, reads goal briefs and states, channel purpose c
 
 ## Tools
 
-The model acts through tools in a registry. Each tool declares its **effect level**: read-only, local (writes only inside Bridle), or external (does something in the world, such as posting, buying or sending). External tools require the user's approval per call unless a goal grants standing permission for that tool. Built-in tools:
+The model acts through tools in a registry. Each tool declares its **effect level**: read-only, local (writes only inside Brindle), or external (does something in the world, such as posting, buying or sending). External tools require the user's approval per call unless a goal grants standing permission for that tool. Built-in tools:
 
 - `web_fetch`, `web_search`, `read_feed` for reading the web.
-- `create_artifact`, `update_goal_state`, `search_history` for working inside Bridle.
+- `create_artifact`, `update_goal_state`, `search_history` for working inside Brindle.
 - `propose_schedule`, `propose_goal` for creating structure, always confirmed by the user.
 - `speak` for text-to-speech, writing an audio artifact.
 - `use_credential` and `request_credential`, through the key manager (below).

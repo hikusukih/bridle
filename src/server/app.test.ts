@@ -12,7 +12,7 @@ describe("GET /api/greeting", () => {
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as Greeting;
-    expect(body.message).toBe("Hello from Bridle.");
+    expect(body.message).toBe("Hello from Brindle.");
     expect(body.since).toBe("2026-01-02T03:04:05.000Z");
   });
 });

@@ -4,17 +4,21 @@ import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import { createApp, recordFirstStart } from "./app.js";
 import { openDatabase } from "./db/index.js";
+import { applyLegacyEnv, migrateLegacyDatabase } from "./legacy.js";
 import { modelFromEnv } from "./model/config.js";
 import { RunEngine } from "./runs.js";
 import { builtInTools } from "./tools/index.js";
 
-const dataDir = resolve(process.env.BRIDLE_DATA_DIR ?? "data");
+applyLegacyEnv(process.env);
+
+const dataDir = resolve(process.env.BRINDLE_DATA_DIR ?? "data");
 // Single user and no auth yet, so stay on loopback unless the operator says otherwise.
 const host = process.env.HOST ?? "127.0.0.1";
 const port = Number(process.env.PORT ?? 8787);
 
 mkdirSync(dataDir, { recursive: true });
-const db = openDatabase(join(dataDir, "bridle.sqlite"));
+migrateLegacyDatabase(dataDir);
+const db = openDatabase(join(dataDir, "brindle.sqlite"));
 recordFirstStart(db);
 
 // Resolves to the package root from both src/server and dist/server.
@@ -27,5 +31,5 @@ if (recovered > 0) console.log(`Marked ${recovered} interrupted run(s) as failed
 const app = createApp({ db, engine, clientRoot: existsSync(builtClient) ? builtClient : undefined });
 
 serve({ fetch: app.fetch, hostname: host, port }, (info) => {
-  console.log(`Bridle listening on http://${info.address}:${info.port}`);
+  console.log(`Brindle listening on http://${info.address}:${info.port}`);
 });
