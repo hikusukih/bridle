@@ -75,6 +75,8 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.5** Drift nudge, with "move the last few messages to a new channel". _needs P3.3_
 
+- [ ] **P3.8** **Design note:** the landing channel. The app opens on a fresh channel that answers in place and may then offer "continue in <channel>", carrying the message over to be answered with that channel's context; no offer for one-offs. The note settles: how a topic is matched against purpose cards and how sure a match must be; when the offer appears and how often (a waved-off match is not offered again for that topic); what carrying a message over does to both channels; what the landing channel's context is before it has a topic; what becomes of fresh channels that never grow past a one-off, so they don't pile up; and how the user's view of what is related overrides the model's, both ways ("these are the same topic", "these are different"). With eval scenarios. _needs P3.1_
+
 - [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5_
 
 ## Phase 4 — goals and the scheduler

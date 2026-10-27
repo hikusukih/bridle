@@ -29,6 +29,8 @@ Long channels are the main way an agent like this degrades: the context balloons
 - **Rolling compaction.** Past a token threshold, the oldest turns are folded into a running summary, and only the summary plus recent turns are sent. The full transcript stays stored and searchable; compaction changes what the model sees, never what the user can read. Compaction keeps decisions, facts the user stated, open questions and commitments, and drops chatter. That claim is tested by the eval suite, not assumed.
 - **Drift nudges.** When the conversation wanders well away from the purpose card, the harness suggests once, inline, starting a new channel for the new topic, with a one-click "move the last few messages there". Short, focused channels are cheaper and better, and the UI makes them the easy path.
 
+**The landing channel.** The app opens on a fresh channel, so the user can just type without choosing where a request belongs. It always answers in place first. When the topic matches an existing channel well (judged against purpose cards), it offers once, inline, to continue in that channel, carrying the message over to be answered with that channel's context. Quick one-off questions get no offer; only a topic that runs several turns or comes back does. Fragmented chats are the failure this guards against, at the risk of an offer the user finds noisy, so offers are suggestions the user can wave off, and the user's judgment of what is related wins over the model's.
+
 ## Goals
 
 A goal is an ongoing project: "learn Rust", "keep me posted on shows at a local venue", "a daily audio brief of the news I care about". A goal has four parts:
