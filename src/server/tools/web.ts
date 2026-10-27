@@ -150,7 +150,7 @@ export function webFetchTool(options: WebOptions = {}): Tool {
 
 type SearchHit = { title?: unknown; url?: unknown; content?: unknown };
 
-/** Searches through a SearXNG-style JSON endpoint the operator points BRIDLE_SEARCH_URL at; no key is involved. */
+/** Searches through a SearXNG-style JSON endpoint the operator points BRINDLE_SEARCH_URL at; no key is involved. */
 export function webSearchTool(baseUrl: string, options: Pick<WebOptions, "fetch"> = {}): Tool {
   const doFetch = options.fetch ?? fetch;
   return {
