@@ -1,6 +1,6 @@
 # Box-worker prompt
 
-The stored prompt for both box-worker scheduled tasks. Paste everything below the rule into the task. It is the same text for both workers: they differ only in their cron expression (`docs/ops/schedule.md`).
+The stored prompt for both box-worker scheduled tasks. Paste everything below the rule into the task. It is the same text for both workers: they differ only in their cron expression (`.agents/ops/schedule.md`).
 
 ---
 
