@@ -93,7 +93,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P4.7** Acceptance: "learn Rust" produces a curriculum held in the goal's state document, visible in the gallery, and a later lesson updates its progress. _needs P4.2, P4.4, P4.5, P2.2_
 
-- [ ] **P4.8** **Review** of Phase 4. _needs P4.1, P4.2, P4.3, P4.4, P4.5, P4.6, P4.7_
+- [ ] **P4.10** **Design note:** standing permission for external tools: what a goal can grant (a tool, a host, a count or time limit), where grants are stored, how the user reviews and revokes them, how `needsApproval` consults them, what an unattended run does when it needs an approval that has not been granted, and how grants appear in the audit trail. _needs P4.1, P4.3_
+
+- [ ] **P4.8** **Review** of Phase 4. _needs P4.10, P4.1, P4.2, P4.3, P4.4, P4.5, P4.6, P4.7_
 
 ## Phase 5 — the feed
 
