@@ -4,6 +4,8 @@ export type Channel = {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+  /** A spec such as "openai:gpt-4o"; null follows the server default. */
+  model: string | null;
 };
 
 export type RunEvent = { id: string; runId: string; seq: number; type: string; data: string; createdAt: string };
