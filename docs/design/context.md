@@ -40,7 +40,7 @@ After a run, if the channel has a purpose card and at least four runs since the 
 
 ### Which model does the housekeeping
 
-Drafting, compaction and drift checks use a **utility model**: `BRIDLE_UTILITY_MODEL`, defaulting to the channel's own model. The architecture's cheap-model-for-summaries default is therefore a setting, not new machinery. Housekeeping calls are not user runs, so they do not count against run limits; their token use is recorded on the summary rows and shown in the debug view.
+Drafting, compaction and drift checks use a **utility model**: `BRINDLE_UTILITY_MODEL`, defaulting to the channel's own model. The architecture's cheap-model-for-summaries default is therefore a setting, not new machinery. Housekeeping calls are not user runs, so they do not count against run limits; their token use is recorded on the summary rows and shown in the debug view.
 
 ## Rejected
 
