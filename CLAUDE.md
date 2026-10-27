@@ -1,6 +1,6 @@
 # Working in this repo
 
-Bridle is a self-hosted personal agent: a harness plus a phone-friendly web app. `docs/architecture.md` is the design, `.agents/PLAN.md` is the work queue, `docs/decisions.md` holds open product questions and settled answers. Process (how agents are managed) lives under `.agents/`: the plan, `.agents/decisions.md` and process design notes such as `.agents/design/slots.md`.
+Brindle is a self-hosted personal agent: a harness plus a phone-friendly web app. `docs/architecture.md` is the design, `.agents/PLAN.md` is the work queue, `docs/decisions.md` holds open product questions and settled answers. Process (how agents are managed) lives under `.agents/`: the plan, `.agents/decisions.md` and process design notes such as `.agents/design/slots.md`.
 
 ## A session's shape
 
