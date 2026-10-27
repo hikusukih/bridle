@@ -57,9 +57,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P2.3** Tools: the registry, `web_fetch` and `web_search`, with the approval card for external-effect tools (none of the first tools need it, but the path exists and is tested). _needs P2.1, P1.4_
 
-- [ ] **P2.4** Artifacts, storage and tool: `create_artifact`, files on disk with metadata in SQLite (kind, scope, the run that made it). Deleting a channel removes the artifacts its runs made, rows and files together, so none is left pointing at a deleted run; goal state documents (Phase 4) are owned by their goal, not a run, and are not removed this way. _needs P2.3_
+- [ ] **P2.4** Artifacts, storage and tool: `create_artifact`, files on disk with metadata in SQLite (kind, scope, the run that made it). Provenance (the channel's name and id, the run, the time) is metadata copied onto the artifact, not a link that cascades, so an artifact outlives the channel and run that made it. Deleting a channel deletes only the artifacts the user picks, rows and files together; the API takes that list, and with none given it keeps them all. Goal state documents (Phase 4) are owned by their goal and are not offered for deletion with a channel. _needs P2.3_
 
-- [ ] **P2.4a** The gallery screen: newest first, filter by kind and scope, each item linked to its run, with the empty state from P1.1 until the first artifact exists. _needs P2.4, P1.1_
+- [ ] **P2.4a** The gallery screen: newest first, filter by kind and scope, each item linked to its run (or marked "from deleted channel <name>" once that is gone), with the empty state from P1.1 until the first artifact exists. Deleting a channel that made artifacts asks first: keep all (the default), delete all, or choose which. _needs P2.4, P1.1_
 
 - [x] **P2.5** Evals: the `evals/` runner, one scenario format, CI running all scenarios against the scripted model, and a manual command to run them against a real model. _needs P1.4, P0.2_
 
