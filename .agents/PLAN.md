@@ -73,7 +73,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.4** Rolling compaction, with eval scenarios: facts, decisions and commitments planted early survive several rounds of compaction. _needs P3.2, P2.5_
 
-- [ ] **P3.5** Drift nudge, with "move the last few messages to a new channel", and "New channel from here" on any run, seeded by a summary of the source. _needs P3.3, P3.4_
+- [ ] **P3.5** "New channel from here" on any run, seeded by a summary of what that run saw, and the drift nudge, whose accept branches a new channel the same way and moves nothing. _needs P3.3, P3.4_
 
 - [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5_
 
