@@ -213,6 +213,32 @@ describe("channel view", () => {
     expect(calls).toContain("POST /api/channels/c1/model");
   });
 
+  it("rebuilds each channel's own history and failure after a reload", async () => {
+    stubFetch({
+      "/api/channels": () => Response.json([channel("c1", "Plans"), channel("c2", "Cooking")]),
+      "/api/channels/c1/runs": () => Response.json([run("done", null, [event(1, "message", { text: "Plan it." })])]),
+      "/api/channels/c2/runs": () =>
+        Response.json([
+          run("failed", "model unreachable", [
+            event(1, "message", { text: "Soup?" }),
+            event(2, "error", { message: "The model could not be reached." }),
+          ]),
+        ]),
+    });
+    for (const [hash, shown, hidden] of [
+      ["#/channels/c2", "Soup?", "Plan it."],
+      ["#/channels/c1", "Plan it.", "Soup?"],
+      ["#/channels/c2", "Soup?", "Plan it."],
+    ] as const) {
+      window.location.hash = hash;
+      const { unmount } = render(<ChannelsScreen />);
+      expect(await screen.findByText(shown)).toBeTruthy();
+      expect(screen.queryByText(hidden)).toBeNull();
+      expect(screen.queryAllByRole("alert").length).toBe(hash === "#/channels/c2" ? 1 : 0);
+      unmount();
+    }
+  });
+
   it("is read-only when the channel is archived", async () => {
     window.location.hash = "#/channels/c1";
     stubFetch({
