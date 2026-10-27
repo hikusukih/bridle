@@ -71,6 +71,10 @@ BRINDLE_MODEL=scripted BRINDLE_SCRIPTED_FIXTURE=fixture.json npm start
 
 Each turn answers one model call and the script does not loop, so a fixture of N turns serves N calls across all runs until the server restarts. Runs left working by a previous process are marked failed at startup.
 
+### Tools
+
+The model can call `web_fetch`, which reads a public page as text (GET only; addresses inside your machine or network are refused unless `BRINDLE_WEB_FETCH_ALLOW_PRIVATE=1`). `web_search` appears when `BRINDLE_SEARCH_URL` points at a SearXNG-style service with its JSON format enabled (for example `http://127.0.0.1:8080`); no key is involved. Tool results are cut to a budget before they go back to the model. A tool that does something in the world would stop and ask first: the channel shows an approval card, and the run waits, even across a restart, until you approve or decline. None of the built-in tools need that yet. The design is in `docs/design/tools.md`.
+
 ## Development
 
 `npm run dev` starts the server on port 8787 and Vite on port 5173 with `/api` proxied to the server. `npm test` runs Vitest; `npm run lint` runs Biome (`npm run lint:fix` applies its safe fixes). After changing `src/server/db/schema.ts`, run `npm run db:generate` to add a migration; migrations apply on startup.

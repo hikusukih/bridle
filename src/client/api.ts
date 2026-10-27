@@ -13,7 +13,7 @@ export type RunEvent = { id: string; runId: string; seq: number; type: string; d
 export type Run = {
   id: string;
   channelId: string;
-  status: "running" | "done" | "failed" | "cancelled" | "stopped";
+  status: "running" | "waiting" | "done" | "failed" | "cancelled" | "stopped";
   stopReason: string | null;
   startedAt: string;
   endedAt: string | null;

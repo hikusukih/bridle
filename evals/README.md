@@ -1,6 +1,6 @@
 # Evals
 
-Scenarios in `scenarios/*.json` replay conversations against the harness: a channel, a list of user messages, a script for the scripted model, and per-run expectations (final status, stop reason, text the reply must contain, and in scripted mode the exact event types). To add one, drop a JSON file in `scenarios/`; its shape is the `Scenario` type in `runner.ts`.
+Scenarios in `scenarios/*.json` replay conversations against the harness: a channel, a list of user messages, a script for the scripted model, and per-run expectations (final status, stop reason, text the reply must contain, and in scripted mode the exact event types). A scenario may also declare fake `tools` (a name, an effect level and a fixed result) and answer approval cards with `approvals`; see `external-tool-waits-for-approval.json`. To add one, drop a JSON file in `scenarios/`; its shape is the `Scenario` type in `runner.ts`.
 
 CI runs every scenario against the scripted model as part of `npm test` (`evals.test.ts`), so the plumbing is checked on every PR.
 
