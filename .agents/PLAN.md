@@ -83,17 +83,19 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P4.2** The scheduler: persisted cron-like entries, survives restarts without double-firing, applies the missed-run policy, and keeps a log of what fired. _needs P4.1, P1.4_
 
-- [ ] **P4.3** Goals: create, edit, archive; the goal's channel with its brief pinned; the Goals screen listing each goal with its next scheduled run. _needs P4.1, P1.2_
+- [ ] **P4.3** Goals, server side: create, edit and archive a goal, and the goal's channel with its brief pinned. _needs P4.1, P1.2_
+
+- [ ] **P4.3a** The Goals screen: list each goal with its next scheduled run, and the form to create and edit one. _needs P4.3, P4.2, P1.1_
 
 - [ ] **P4.4** The state document: `update_goal_state` with versions, shown as an artifact, readable and editable by the user, with history. _needs P4.3, P2.4_
 
 - [ ] **P4.5** `propose_schedule` from plain words, confirmed by the user, with eval scenarios ("twice a day", "weekdays at 6:30", "every other Sunday"). _needs P4.2, P4.3, P2.3, P2.5_
 
-- [ ] **P4.6** Goal templates behind the category buttons. _needs P4.3_
+- [ ] **P4.6** Goal templates behind the category buttons. _needs P4.3a_
 
 - [ ] **P4.7** Acceptance: "learn Rust" produces a curriculum held in the goal's state document, visible in the gallery, and a later lesson updates its progress. _needs P4.2, P4.4, P4.5, P2.2_
 
-- [ ] **P4.8** **Review** of Phase 4. _needs P4.1, P4.2, P4.3, P4.4, P4.5, P4.6, P4.7_
+- [ ] **P4.8** **Review** of Phase 4. _needs P4.1, P4.2, P4.3, P4.3a, P4.4, P4.5, P4.6, P4.7_
 
 ## Phase 5 — the feed
 
