@@ -13,6 +13,6 @@ Open questions first, each with a recommendation. A session that hits a question
 - Stack: TypeScript throughout, React + Vite + Tailwind PWA, Hono on Node, SQLite through Drizzle, SSE, Vitest, Docker. The most standard choice, so any agent can pick it up cold.
 - The harness is ours; models are pluggable behind an adapter, and external agents plug in as ACP delegates.
 - The agent may ask for logins. Credentials go through the key manager, which is held to a higher bar than the rest of the code.
-- Name: Brindle. Several AI-agent tools already use Bridle, and Bindle is a WebAssembly package system; no software named Brindle turned up. The rename is box P0.5, proposed in #20.
+- Name: Brindle. Several AI-agent tools already use Bridle, and Bindle is a WebAssembly package system; no software named Brindle turned up. The rename landed as box P0.5.
 - Where it runs: the Docker image on an always-on host, reached over a private network or a reverse proxy the operator already runs. Nothing in the code assumes a particular host.
 - Default models: one strong model for conversation and goal planning, and one cheap or local model for watchers and summaries, chosen per scope in configuration. Models are reached through the OpenAI-style API first, since one adapter then covers local servers such as Ollama and hosted models alike (P2.2); the adapter contract (P1.3) is the interface that keeps other providers from becoming a big refactor.
