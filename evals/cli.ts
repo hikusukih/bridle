@@ -1,5 +1,5 @@
 // Usage: npm run evals [-- <scenario-name-substring>]
-// Add `--live` to run against a real model: set BRIDLE_EVAL_MODEL_MODULE to a module whose default export
+// Add `--live` to run against a real model: set BRINDLE_EVAL_MODEL_MODULE to a module whose default export
 // is a function returning a ModelAdapter. This costs money; run it when a harness change could move results.
 
 import { resolve } from "node:path";
@@ -14,9 +14,9 @@ const filter = args.find((a) => !a.startsWith("--"));
 
 let makeModel: (() => ModelAdapter) | undefined;
 if (live) {
-  const path = process.env.BRIDLE_EVAL_MODEL_MODULE;
+  const path = process.env.BRINDLE_EVAL_MODEL_MODULE;
   if (!path) {
-    console.error("--live needs BRIDLE_EVAL_MODEL_MODULE, a module whose default export returns a ModelAdapter.");
+    console.error("--live needs BRINDLE_EVAL_MODEL_MODULE, a module whose default export returns a ModelAdapter.");
     process.exit(2);
   }
   makeModel = ((await import(pathToFileURL(resolve(path)).href)) as { default: () => ModelAdapter }).default;

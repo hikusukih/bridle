@@ -10,7 +10,7 @@ The run loop in `src/server/runs.ts` answers every tool call with "no tool named
 
 ### The registry
 
-A tool is a plain object: `name`, `description`, a JSON Schema for arguments (the same shape as `ToolDefinition` in the adapter contract), an `effect` level, and an `execute(args, ctx)` function that returns a string or a structured result. `ctx` carries the run id, the scope (channel or goal), an abort signal, and a logger; it never carries the database handle, so a tool reaches Bridle's state only through the narrow functions the registry gives it.
+A tool is a plain object: `name`, `description`, a JSON Schema for arguments (the same shape as `ToolDefinition` in the adapter contract), an `effect` level, and an `execute(args, ctx)` function that returns a string or a structured result. `ctx` carries the run id, the scope (channel or goal), an abort signal, and a logger; it never carries the database handle, so a tool reaches Brindle's state only through the narrow functions the registry gives it.
 
 The registry is a single in-process map built at startup. A run asks it for the definitions to send to the model (`registry.definitions(scope)`) and for the tool to execute a call. Arguments are validated against the schema before `execute` runs; a failure becomes an error tool result the model can read and correct, not a thrown error. An unknown tool name is the same kind of error result, as today. A tool that throws is caught, recorded as an error result with a short message, and never ends the run. MCP and ACP tools (P9) join through the same registry later, so nothing here assumes built-in tools only.
 
@@ -18,8 +18,8 @@ The registry is a single in-process map built at startup. A run asks it for the 
 
 Every tool declares exactly one level, and there is no default: registering a tool without one is a startup error.
 
-- `read`: reads outside or inside Bridle and changes nothing (`web_fetch`, `web_search`, `read_feed`, `search_history`).
-- `local`: writes, but only inside Bridle's own data (`create_artifact`, `update_goal_state`).
+- `read`: reads outside or inside Brindle and changes nothing (`web_fetch`, `web_search`, `read_feed`, `search_history`).
+- `local`: writes, but only inside Brindle's own data (`create_artifact`, `update_goal_state`).
 - `external`: does something in the world that the user could not simply undo (posting, sending, buying, anything with a side effect on a third party).
 
 Rules that follow from the level: `read` and `local` run immediately. `external` never runs without approval. A tool that is both a read and an effect (a fetch that carries a credential, say) takes the higher level. `web_fetch` is `read` only because it is limited to GET with no body and no credential handle; a tool that sends data out in a request body is `external` even if the call is harmless in practice. The level is a property of the tool, not of one call, which keeps the rule checkable by reading the registry.
