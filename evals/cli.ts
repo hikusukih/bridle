@@ -1,6 +1,6 @@
 // Usage: npm run evals [-- <scenario-name-substring>]
 // Add `--live` to run against a real model: it is built from the same configuration as the server, so set
-// BRIDLE_MODEL (such as openai:<model>) and the matching key. This costs money; run it when a harness change
+// BRINDLE_MODEL (such as openai:<model>) and the matching key. This costs money; run it when a harness change
 // could move results.
 
 import type { ModelAdapter } from "../src/server/model/adapter.js";

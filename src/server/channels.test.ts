@@ -110,7 +110,7 @@ describe("channel store", () => {
     const { mkdtempSync } = await import("node:fs");
     const { tmpdir } = await import("node:os");
     const { join } = await import("node:path");
-    const file = join(mkdtempSync(join(tmpdir(), "bridle-")), "t.sqlite");
+    const file = join(mkdtempSync(join(tmpdir(), "brindle-")), "t.sqlite");
     const id = createChannel(openDatabase(file), "Persisted").id;
     expect(getChannel(openDatabase(file), id).name).toBe("Persisted");
     expect(() => getChannel(openDatabase(file), "missing")).toThrow(ChannelError);

@@ -38,7 +38,7 @@ export function createApp({ db, engine, models, clientRoot }: AppOptions) {
   app.get("/api/greeting", (c) => {
     const row = db.select().from(appMeta).where(eq(appMeta.key, "first_started_at")).get();
     const greeting: Greeting = {
-      message: "Hello from Bridle.",
+      message: "Hello from Brindle.",
       since: row?.value ?? new Date().toISOString(),
     };
     return c.json(greeting);

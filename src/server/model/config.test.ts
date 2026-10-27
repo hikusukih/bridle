@@ -9,12 +9,12 @@ const fixture = JSON.stringify({ turns: [{ text: ["hi"] }] });
 describe("modelRegistry", () => {
   it("has no default when none is configured, and refuses to resolve one", () => {
     expect(modelRegistry({}).defaultSpec).toBeUndefined();
-    expect(modelRegistry({ BRIDLE_MODEL: " " }).defaultSpec).toBeUndefined();
+    expect(modelRegistry({ BRINDLE_MODEL: " " }).defaultSpec).toBeUndefined();
     expect(() => modelRegistry({}).resolve(null)).toThrow(/No model is configured/);
   });
 
   it("loads the scripted model from the fixture path, once per registry", () => {
-    const registry = modelRegistry({ BRIDLE_MODEL: "scripted", BRIDLE_SCRIPTED_FIXTURE: "turns.json" }, (path) => {
+    const registry = modelRegistry({ BRINDLE_MODEL: "scripted", BRINDLE_SCRIPTED_FIXTURE: "turns.json" }, (path) => {
       expect(path).toBe("turns.json");
       return fixture;
     });
@@ -33,16 +33,16 @@ describe("modelRegistry", () => {
 
   it("lets a local OpenAI-compatible server go without a key", () => {
     expect(
-      modelRegistry({ BRIDLE_OPENAI_BASE_URL: "http://127.0.0.1:11434/v1" }).resolve("openai:llama"),
+      modelRegistry({ BRINDLE_OPENAI_BASE_URL: "http://127.0.0.1:11434/v1" }).resolve("openai:llama"),
     ).toBeInstanceOf(OpenAiAdapter);
   });
 
   it("fails loudly on a missing key or path, a bad fixture or an unknown model", () => {
-    expect(() => modelRegistry({ BRIDLE_MODEL: "scripted" })).toThrow(/BRIDLE_SCRIPTED_FIXTURE/);
-    expect(() => modelRegistry({ BRIDLE_MODEL: "scripted", BRIDLE_SCRIPTED_FIXTURE: "x" }, () => "{}")).toThrow(
+    expect(() => modelRegistry({ BRINDLE_MODEL: "scripted" })).toThrow(/BRINDLE_SCRIPTED_FIXTURE/);
+    expect(() => modelRegistry({ BRINDLE_MODEL: "scripted", BRINDLE_SCRIPTED_FIXTURE: "x" }, () => "{}")).toThrow(
       /turns/,
     );
-    expect(() => modelRegistry({ BRIDLE_MODEL: "gpt" })).toThrow(ModelConfigError);
+    expect(() => modelRegistry({ BRINDLE_MODEL: "gpt" })).toThrow(ModelConfigError);
     expect(() => modelRegistry({}).validate("anthropic:claude-test")).toThrow(/ANTHROPIC_API_KEY/);
     expect(() => modelRegistry({}).validate("openai:gpt-test")).toThrow(/OPENAI_API_KEY/);
     expect(() => modelRegistry({}).validate("openai:")).toThrow(/not a supported model/);

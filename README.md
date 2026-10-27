@@ -1,4 +1,4 @@
-# Bridle
+# Brindle
 
 [![CI](https://github.com/hikusukih/bridle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hikusukih/bridle/actions/workflows/ci.yml)
 
@@ -11,19 +11,30 @@ Early and under construction. The design is in `docs/architecture.md` and the wo
 Clone this repository, then from its root:
 
 ```sh
-docker build -t bridle .
-docker run -d --name bridle --restart unless-stopped \
+docker build -t brindle .
+docker run -d --name brindle --restart unless-stopped \
   -p 127.0.0.1:8787:8787 \
-  -v bridle-data:/data \
-  bridle
+  -v brindle-data:/data \
+  brindle
 ```
 
 Open `http://127.0.0.1:8787`. The page shows a greeting from the server and the time it first started.
 
-- Bridle has no login yet. Inside the container it listens on all interfaces so Docker can forward to it, which is why the `-p` above publishes it on the host's loopback only. Don't publish it more widely until authentication lands.
-- Everything Bridle keeps lives in the `bridle-data` volume, mounted at `/data`. Removing the container keeps it; `docker volume rm bridle-data` deletes it.
-- To upgrade, pull the new code, rebuild the image, then `docker rm -f bridle` and run the same `docker run` again. Database migrations apply on startup.
+- Brindle has no login yet. Inside the container it listens on all interfaces so Docker can forward to it, which is why the `-p` above publishes it on the host's loopback only. Don't publish it more widely until authentication lands.
+- Everything Brindle keeps lives in the `brindle-data` volume, mounted at `/data`. Removing the container keeps it; `docker volume rm brindle-data` deletes it.
+- To upgrade, pull the new code, rebuild the image, then `docker rm -f brindle` and run the same `docker run` again. Database migrations apply on startup.
 - The image runs as an unprivileged user and needs no compiler: the SQLite driver's prebuilt binaries cover amd64 and arm64.
+
+### Moving an install from Bridle
+
+The project used to be called Bridle. An old data directory works as is: at startup the server renames `bridle.sqlite` to `brindle.sqlite` if only the old file exists, and an old `BRIDLE_*` variable is read with a warning when its `BRINDLE_*` twin is unset. Docker volumes can't be renamed, so either keep mounting the old volume (`-v bridle-data:/data`) or copy it into the new one:
+
+```sh
+docker volume create brindle-data
+docker run --rm -v bridle-data:/from -v brindle-data:/to node:22-bookworm-slim cp -a /from/. /to/
+```
+
+Then `docker rm -f bridle`, run the quickstart above, and `docker volume rm bridle-data` once the new install looks right.
 
 ## Quickstart from source
 
@@ -35,27 +46,27 @@ npm run build
 npm start
 ```
 
-Open `http://127.0.0.1:8787`. Data lives in `./data` unless `BRIDLE_DATA_DIR` says otherwise; `PORT` and `HOST` change where it listens (loopback by default).
+Open `http://127.0.0.1:8787`. Data lives in `./data` unless `BRINDLE_DATA_DIR` says otherwise; `PORT` and `HOST` change where it listens (loopback by default).
 
 ### Choosing a model
 
-Set `BRIDLE_MODEL` to the default model, written `provider:name`: `openai:<model>`, `anthropic:<model>` or `scripted`. Keys come from the environment only: `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`. To reach a local OpenAI-compatible server such as Ollama, set `BRIDLE_OPENAI_BASE_URL` (for example `http://127.0.0.1:11434/v1`), and no key is needed. `BRIDLE_ANTHROPIC_BASE_URL` overrides the Anthropic endpoint.
+Set `BRINDLE_MODEL` to the default model, written `provider:name`: `openai:<model>`, `anthropic:<model>` or `scripted`. Keys come from the environment only: `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`. To reach a local OpenAI-compatible server such as Ollama, set `BRINDLE_OPENAI_BASE_URL` (for example `http://127.0.0.1:11434/v1`), and no key is needed. `BRINDLE_ANTHROPIC_BASE_URL` overrides the Anthropic endpoint.
 
 ```sh
-OPENAI_API_KEY=... BRIDLE_MODEL=openai:<model> npm start
+OPENAI_API_KEY=... BRINDLE_MODEL=openai:<model> npm start
 ```
 
 Each channel shows the model it uses under its name, and a channel can be set to a different one with the same `provider:name` spelling; clearing the field returns it to the default. A model whose key is missing is refused when you set it. With no default and no choice on the channel, sending a message answers 503.
 
 ### Trying runs with the scripted model
 
-For development and acceptance without a key, set `BRIDLE_MODEL=scripted` and `BRIDLE_SCRIPTED_FIXTURE` to a JSON file of canned turns.
+For development and acceptance without a key, set `BRINDLE_MODEL=scripted` and `BRINDLE_SCRIPTED_FIXTURE` to a JSON file of canned turns.
 
 ```sh
 cat > fixture.json <<'JSON'
 { "turns": [{ "text": ["Hello ", "from the scripted model."], "usage": { "inputTokens": 5, "outputTokens": 6 } }] }
 JSON
-BRIDLE_MODEL=scripted BRIDLE_SCRIPTED_FIXTURE=fixture.json npm start
+BRINDLE_MODEL=scripted BRINDLE_SCRIPTED_FIXTURE=fixture.json npm start
 ```
 
 Each turn answers one model call and the script does not loop, so a fixture of N turns serves N calls across all runs until the server restarts. Runs left working by a previous process are marked failed at startup.

@@ -21,7 +21,7 @@ const post = (app: ReturnType<typeof createApp>, path: string, body: unknown) =>
 
 describe("per-channel model", () => {
   it("reports the default and stores a channel's own choice", async () => {
-    const { app, channel } = setup({ BRIDLE_MODEL: "scripted", BRIDLE_SCRIPTED_FIXTURE: "Default." });
+    const { app, channel } = setup({ BRINDLE_MODEL: "scripted", BRINDLE_SCRIPTED_FIXTURE: "Default." });
     expect(await (await app.request("/api/models")).json()).toEqual({ default: "scripted" });
 
     const res = await post(app, `/api/channels/${channel.id}/model`, { model: "scripted" });
@@ -40,11 +40,11 @@ describe("per-channel model", () => {
 
   it("runs a channel on its own model and others on the default", async () => {
     const { app, engine, db, channel } = setup({
-      BRIDLE_MODEL: "scripted",
-      BRIDLE_SCRIPTED_FIXTURE: "Default.",
+      BRINDLE_MODEL: "scripted",
+      BRINDLE_SCRIPTED_FIXTURE: "Default.",
       OPENAI_API_KEY: "sk-test-1234abcd1234abcd",
       // Nothing listens here, so the run on the OpenAI model fails fast without touching the network.
-      BRIDLE_OPENAI_BASE_URL: "http://127.0.0.1:1/v1",
+      BRINDLE_OPENAI_BASE_URL: "http://127.0.0.1:1/v1",
     });
     const other = createChannel(db, "Other");
     await post(app, `/api/channels/${other.id}/model`, { model: "openai:gpt-test" });

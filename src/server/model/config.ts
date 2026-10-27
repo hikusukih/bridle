@@ -8,7 +8,7 @@ import { type ScriptedFixture, ScriptedModel } from "./scripted.js";
 export class ModelConfigError extends Error {}
 
 export type ModelRegistry = {
-  /** The spec from BRIDLE_MODEL, which channels without a model of their own use. */
+  /** The spec from BRINDLE_MODEL, which channels without a model of their own use. */
   defaultSpec: string | undefined;
   /** The adapter for a spec, or for the default when null. One instance per spec, so a scripted model keeps its place. */
   resolve(spec: string | null): ModelAdapter;
@@ -21,7 +21,7 @@ const openAiDefaultBase = "https://api.openai.com/v1";
 /**
  * Reads model configuration from the environment. A spec is `scripted`, `openai:<model>` or
  * `anthropic:<model>`. Keys come only from OPENAI_API_KEY and ANTHROPIC_API_KEY. OpenAI-compatible local
- * servers are reached by pointing BRIDLE_OPENAI_BASE_URL at them, in which case no key is required.
+ * servers are reached by pointing BRINDLE_OPENAI_BASE_URL at them, in which case no key is required.
  * Misconfiguration throws: failing at startup beats failing on the first message.
  */
 export function modelRegistry(
@@ -33,10 +33,10 @@ export function modelRegistry(
 
   const build = (spec: string): ModelAdapter => {
     if (spec === "scripted") {
-      const path = value("BRIDLE_SCRIPTED_FIXTURE");
+      const path = value("BRINDLE_SCRIPTED_FIXTURE");
       if (!path)
         throw new ModelConfigError(
-          "The scripted model needs BRIDLE_SCRIPTED_FIXTURE, the path to a fixture JSON file.",
+          "The scripted model needs BRINDLE_SCRIPTED_FIXTURE, the path to a fixture JSON file.",
         );
       const fixture = JSON.parse(readFixture(path)) as ScriptedFixture;
       if (!Array.isArray(fixture?.turns)) {
@@ -55,13 +55,13 @@ export function modelRegistry(
     if (provider === "anthropic") {
       const apiKey = value("ANTHROPIC_API_KEY");
       if (!apiKey) throw new ModelConfigError("Set ANTHROPIC_API_KEY to use an Anthropic model.");
-      return new AnthropicAdapter({ model, apiKey, baseUrl: value("BRIDLE_ANTHROPIC_BASE_URL") });
+      return new AnthropicAdapter({ model, apiKey, baseUrl: value("BRINDLE_ANTHROPIC_BASE_URL") });
     }
-    const baseUrl = value("BRIDLE_OPENAI_BASE_URL");
+    const baseUrl = value("BRINDLE_OPENAI_BASE_URL");
     const apiKey = value("OPENAI_API_KEY");
     if (!apiKey && !baseUrl)
       throw new ModelConfigError(
-        "Set OPENAI_API_KEY (or BRIDLE_OPENAI_BASE_URL for a local server) to use an OpenAI-compatible model.",
+        "Set OPENAI_API_KEY (or BRINDLE_OPENAI_BASE_URL for a local server) to use an OpenAI-compatible model.",
       );
     return new OpenAiAdapter({ model, apiKey, baseUrl: baseUrl ?? openAiDefaultBase });
   };
@@ -75,14 +75,14 @@ export function modelRegistry(
     return adapter;
   };
 
-  const defaultSpec = value("BRIDLE_MODEL");
+  const defaultSpec = value("BRINDLE_MODEL");
   if (defaultSpec) forSpec(defaultSpec);
   return {
     defaultSpec,
     resolve(spec) {
       const chosen = spec ?? defaultSpec;
       if (!chosen)
-        throw new ModelConfigError("No model is configured. Set BRIDLE_MODEL or choose one for this channel.");
+        throw new ModelConfigError("No model is configured. Set BRINDLE_MODEL or choose one for this channel.");
       return forSpec(chosen);
     },
     validate(spec) {
