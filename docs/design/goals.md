@@ -10,7 +10,7 @@ A goal is an ongoing project with its own memory and its own clock: "learn Rust"
 
 ### What is stored
 
-- **`goals`**: id, title, brief (user-written, agent-assisted), status (`active` or `archived`), the id of its channel, timestamps. The channel is created with the goal and the brief is shown pinned at its top.
+- **`goals`**: id, title, brief (user-written, agent-assisted), status (`active` or `archived`), the id of its channel, timestamps. The channel is created with the goal and the brief is shown pinned at its top. The brief is that channel's purpose card: no separate card is drafted, it is sent in the scope-card layer, and the drift check compares against it (`docs/design/context.md`).
 - **`goal_states`**: goal id, a version number, the content (Markdown), who wrote it (`agent` or `user`), the run that wrote it, a one-line note of what changed, a timestamp. Versions are append-only and never edited. The current state is the highest version. For the Artifacts gallery (P4.4) the state document is a listing that points at the goal and always shows the latest version; there is no second copy to drift.
 - **`schedules`**: id, goal id, a five-field cron expression, an IANA time zone, the task prompt, a destination, `enabled`, `next_fire_at`, a missed-run policy. The destination is `channel` (the run posts in the goal's channel) in Phase 4; `feed` and `digest` arrive with Phases 5 and 8 as new values, not new columns.
 - **`schedule_fires`**: schedule id, `due_at`, fired timestamp, the run id if one started, and an outcome (`started`, `missed`, `skipped_busy`, `failed_to_start`). A unique index on (schedule id, `due_at`) is what makes double-firing impossible. This table is the log the scheduler's box (P4.2) promises, and the Goals screen reads it.
