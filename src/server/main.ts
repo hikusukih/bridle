@@ -5,7 +5,7 @@ import { serve } from "@hono/node-server";
 import { createApp, recordFirstStart } from "./app.js";
 import { openDatabase } from "./db/index.js";
 import { applyLegacyEnv, migrateLegacyDatabase } from "./legacy.js";
-import { modelFromEnv } from "./model/config.js";
+import { modelRegistry } from "./model/config.js";
 import { RunEngine } from "./runs.js";
 import { builtInTools } from "./tools/index.js";
 
@@ -23,12 +23,12 @@ recordFirstStart(db);
 
 // Resolves to the package root from both src/server and dist/server.
 const builtClient = fileURLToPath(new URL("../../dist/client", import.meta.url));
-// Only the scripted model exists until P2.2; with no model configured, starting a run answers 503.
-const model = modelFromEnv(process.env);
-const engine = model ? new RunEngine(db, model, undefined, builtInTools(process.env)) : undefined;
-const recovered = engine?.recoverInterrupted() ?? 0;
+// With no default model and none chosen for a channel, starting a run answers 503.
+const models = modelRegistry(process.env);
+const engine = new RunEngine(db, (spec) => models.resolve(spec), undefined, builtInTools(process.env));
+const recovered = engine.recoverInterrupted();
 if (recovered > 0) console.log(`Marked ${recovered} interrupted run(s) as failed.`);
-const app = createApp({ db, engine, clientRoot: existsSync(builtClient) ? builtClient : undefined });
+const app = createApp({ db, engine, models, clientRoot: existsSync(builtClient) ? builtClient : undefined });
 
 serve({ fetch: app.fetch, hostname: host, port }, (info) => {
   console.log(`Brindle listening on http://${info.address}:${info.port}`);

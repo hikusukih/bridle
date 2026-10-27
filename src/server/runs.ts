@@ -29,12 +29,15 @@ export const defaultLimits: RunLimits = {
 
 export class RunError extends Error {
   constructor(
-    readonly code: "not_found" | "busy" | "invalid_text" | "finished" | "invalid_decision",
+    readonly code: "not_found" | "busy" | "invalid_text" | "finished" | "invalid_decision" | "no_model",
     message: string,
   ) {
     super(message);
   }
 }
+
+/** One adapter for every channel, or a function that picks by the channel's model spec (null: the default). */
+export type ModelSource = ModelAdapter | ((spec: string | null) => ModelAdapter);
 
 export type RunWithEvents = Run & { events: RunEvent[] };
 
@@ -116,7 +119,7 @@ export class RunEngine {
 
   constructor(
     private readonly db: Db,
-    private readonly model: ModelAdapter,
+    private readonly model: ModelSource,
     private readonly limits: RunLimits = defaultLimits,
     private readonly tools: ToolRegistry = new ToolRegistry(),
   ) {}
@@ -140,6 +143,7 @@ export class RunEngine {
     if (running.some((r) => r.status === "running" || r.status === "waiting"))
       throw new RunError("busy", "This channel is still working on a message.");
 
+    const model = this.modelFor(channel.model);
     const history = this.history(channelId);
     const run: Run = {
       id: randomUUID(),
@@ -156,7 +160,7 @@ export class RunEngine {
     this.active.set(run.id, controller);
     this.settled.set(
       run.id,
-      this.loop(run.id, channelId, [...history, { role: "user", content: message }], controller),
+      this.loop(run.id, channelId, model, [...history, { role: "user", content: message }], controller),
     );
     return run;
   }
@@ -194,18 +198,20 @@ export class RunEngine {
     if (!stored.some((e) => asked(e, "approval_request"))) throw new RunError("not_found", "No such approval request.");
     if (stored.some((e) => asked(e, "approval_decision"))) throw new RunError("finished", "That was already decided.");
 
-    this.append(runId, "approval_decision", { callId, decision });
     const state = this.live.get(runId);
+    // Resolved before the decision is stored, so a model that is no longer configured leaves the card answerable.
+    const model = state ? undefined : this.modelFor(getChannel(this.db, run.channelId).model);
+    this.append(runId, "approval_decision", { callId, decision });
     if (state) {
       state.decisions.set(callId, decision);
       state.waiters.get(callId)?.();
-    } else {
-      this.resume(run);
+    } else if (model) {
+      this.resume(run, model);
     }
     return this.get(runId);
   }
 
-  private resume(run: Run) {
+  private resume(run: Run, model: ModelAdapter) {
     const stored = this.storedEvents(run.id);
     const decisions = new Map<string, Decision>();
     const requested = new Set<string>();
@@ -231,7 +237,15 @@ export class RunEngine {
       decisions,
       requested,
     };
-    this.settled.set(run.id, this.loop(run.id, run.channelId, messages, controller, resume));
+    this.settled.set(run.id, this.loop(run.id, run.channelId, model, messages, controller, resume));
+  }
+
+  private modelFor(spec: string | null): ModelAdapter {
+    try {
+      return typeof this.model === "function" ? this.model(spec) : this.model;
+    } catch (err) {
+      throw new RunError("no_model", (err as Error).message);
+    }
   }
 
   private storedEvents(runId: string): RunEvent[] {
@@ -299,6 +313,7 @@ export class RunEngine {
   private async loop(
     runId: string,
     channelId: string,
+    model: ModelAdapter,
     messages: Message[],
     controller: AbortController,
     resume?: Resume,
@@ -340,7 +355,7 @@ export class RunEngine {
             tools: this.tools.size ? this.tools.definitions() : undefined,
             signal: controller.signal,
           };
-          for await (const ev of this.model.stream(request)) {
+          for await (const ev of model.stream(request)) {
             if (ev.type === "text") text += ev.text;
             else if (ev.type === "tool_call") calls.push(ev.call);
             else {

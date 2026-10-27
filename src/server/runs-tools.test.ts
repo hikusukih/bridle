@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { createApp } from "./app.js";
-import { createChannel } from "./channels.js";
+import { createChannel, setChannelModel } from "./channels.js";
 import { openDatabase } from "./db/index.js";
 import { events } from "./db/schema.js";
 import { type ScriptedFixture, ScriptedModel } from "./model/scripted.js";
-import { defaultLimits, RunEngine, type RunLimits } from "./runs.js";
+import { defaultLimits, RunEngine, RunError, type RunLimits } from "./runs.js";
 import { type Tool, ToolRegistry } from "./tools/registry.js";
 
 const call = (id: string, name: string, args: Record<string, unknown> = {}) => ({ id, name, arguments: args });
@@ -263,6 +263,37 @@ describe("approvals", () => {
       { role: "assistant", content: "Let me send that.", toolCalls: [call("e1", "send_email", { x: "hi" })] },
       { role: "tool", toolCallId: "e1", content: "sent" },
     ]);
+  });
+
+  it("resumes after a restart on the channel's own model, and refuses while that model is missing", async () => {
+    const file = join(mkdtempSync(join(tmpdir(), "brindle-tools-")), "t.sqlite");
+    const before = setup(external, {}, file);
+    setChannelModel(before.db, before.channel.id, "openai:chosen", () => {});
+    const run = before.engine.start(before.channel.id, "mail");
+    await waitUntil(() => before.engine.get(run.id).status === "waiting");
+
+    const db = openDatabase(file);
+    const chosen = new ScriptedModel({ turns: [{ text: ["Sent."] }] });
+    let configured = false;
+    const asked: (string | null)[] = [];
+    const engine = new RunEngine(
+      db,
+      (spec) => {
+        asked.push(spec);
+        if (!configured) throw new Error("Set OPENAI_API_KEY to use an OpenAI-compatible model.");
+        return chosen;
+      },
+      defaultLimits,
+      fakeTools([]),
+    );
+    expect(() => engine.decide(run.id, "e1", "approve")).toThrow(RunError);
+    // The card stays answerable once the model is configured again.
+    configured = true;
+    engine.decide(run.id, "e1", "approve");
+    await engine.whenSettled(run.id);
+    expect(engine.get(run.id).status).toBe("done");
+    expect(asked).toEqual(["openai:chosen", "openai:chosen"]);
+    expect(chosen.requests).toHaveLength(1);
   });
 
   it("lets a waiting run be cancelled after a restart", async () => {

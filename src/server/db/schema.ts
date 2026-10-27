@@ -14,6 +14,8 @@ export const channels = sqliteTable("channels", {
   updatedAt: text("updated_at").notNull(),
   // Null while the channel is live; archiving hides it and makes it read-only, restoring clears it.
   archivedAt: text("archived_at"),
+  // A model spec such as "openai:gpt-4o"; null means the server's default model.
+  model: text("model"),
 });
 
 export const runs = sqliteTable(
