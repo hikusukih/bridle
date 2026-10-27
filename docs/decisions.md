@@ -7,6 +7,8 @@ Open questions first, each with a recommendation. A session that hits a question
 - **Text-to-speech provider.** Recommend an OpenAI-compatible speech endpoint, so a local TTS server and a hosted one are interchangeable.
 - **Master key for the vault.** Recommend a key file outside the data directory with owner-only permissions, its path set by an environment variable, with an OS keychain as a later option. Decided in the Phase 6 design note.
 
+- **Backup and restore.** Everything a user would grieve to lose (channels, goal state documents, artifacts, the vault) lives in one data directory on one host. Recommend documenting, not building, a first answer: a README section saying to stop the server or use SQLite's online backup for the database and copy the artifacts directory alongside it, and, once the vault exists, to back up its key file separately from the data directory so that a stolen backup does not open the vault. A built-in export can follow if the manual steps prove error-prone.
+
 ## Settled
 
 - Public repo, MIT license.
