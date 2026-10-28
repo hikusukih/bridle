@@ -1,6 +1,6 @@
 # Brindle
 
-[![CI](https://github.com/hikusukih/bridle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hikusukih/bridle/actions/workflows/ci.yml)
+[![CI](https://github.com/hikusukih/brindle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hikusukih/brindle/actions/workflows/ci.yml)
 
 A self-hosted personal agent with a calm, phone-friendly home: persistent **channels** for conversations, **goals** that keep their own state and act on a schedule, a **feed** of what scheduled work found (also published as RSS), one gallery of **artifacts**, and opt-in **suggestions**. Models are pluggable; credentials go through a key manager that keeps them out of the model's sight.
 
@@ -48,9 +48,19 @@ npm start
 
 Open `http://127.0.0.1:8787`. Data lives in `./data` unless `BRINDLE_DATA_DIR` says otherwise; `PORT` and `HOST` change where it listens (loopback by default).
 
+### Choosing a model
+
+Set `BRINDLE_MODEL` to the default model, written `provider:name`: `openai:<model>`, `anthropic:<model>` or `scripted`. Keys come from the environment only: `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`. To reach a local OpenAI-compatible server such as Ollama, set `BRINDLE_OPENAI_BASE_URL` (for example `http://127.0.0.1:11434/v1`), and no key is needed. `BRINDLE_ANTHROPIC_BASE_URL` overrides the Anthropic endpoint.
+
+```sh
+OPENAI_API_KEY=... BRINDLE_MODEL=openai:<model> npm start
+```
+
+Each channel shows the model it uses under its name, and a channel can be set to a different one with the same `provider:name` spelling; clearing the field returns it to the default. A model whose key is missing is refused when you set it. With no default and no choice on the channel, sending a message answers 503.
+
 ### Trying runs with the scripted model
 
-Until the real model adapters land, set `BRINDLE_MODEL=scripted` and `BRINDLE_SCRIPTED_FIXTURE` to a JSON file of canned turns to make sending a message work. Without `BRINDLE_MODEL`, starting a run answers 503.
+For development and acceptance without a key, set `BRINDLE_MODEL=scripted` and `BRINDLE_SCRIPTED_FIXTURE` to a JSON file of canned turns.
 
 ```sh
 cat > fixture.json <<'JSON'
@@ -60,6 +70,10 @@ BRINDLE_MODEL=scripted BRINDLE_SCRIPTED_FIXTURE=fixture.json npm start
 ```
 
 Each turn answers one model call and the script does not loop, so a fixture of N turns serves N calls across all runs until the server restarts. Runs left working by a previous process are marked failed at startup.
+
+### Tools
+
+The model can call `web_fetch`, which reads a public page as text (GET only; addresses inside your machine or network are refused unless `BRINDLE_WEB_FETCH_ALLOW_PRIVATE=1`). `web_search` appears when `BRINDLE_SEARCH_URL` points at a SearXNG-style service with its JSON format enabled (for example `http://127.0.0.1:8080`); no key is involved. Tool results are cut to a budget before they go back to the model. A tool that does something in the world would stop and ask first: the channel shows an approval card, and the run waits, even across a restart, until you approve or decline. None of the built-in tools need that yet. The design is in `docs/design/tools.md`.
 
 ## Development
 

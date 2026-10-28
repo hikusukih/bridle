@@ -15,6 +15,13 @@
       "when": 1792407143155,
       "tag": "0001_channels_runs_events",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793012184760,
+      "tag": "0002_unusual_hemingway",
+      "breakpoints": true
     }
   ]
 }

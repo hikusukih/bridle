@@ -1,0 +1,37 @@
+{
+  "name": "external-tool-waits-for-approval",
+  "description": "An external tool is put to the user and runs only after approval; the stored call is what runs.",
+  "messages": ["Send it."],
+  "tools": [
+    {
+      "name": "send_email",
+      "effect": "external",
+      "result": "sent"
+    }
+  ],
+  "script": {
+    "turns": [
+      {
+        "toolCalls": [
+          {
+            "id": "c1",
+            "name": "send_email",
+            "arguments": {}
+          }
+        ]
+      },
+      {
+        "text": ["It is sent."]
+      }
+    ]
+  },
+  "expect": [
+    {
+      "status": "done",
+      "approvals": ["approve"],
+      "toolResultIncludes": ["sent"],
+      "replyIncludes": ["It is sent."],
+      "eventTypes": ["message", "tool_call", "approval_request", "approval_decision", "tool_result", "text"]
+    }
+  ]
+}

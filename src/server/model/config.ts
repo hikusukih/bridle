@@ -1,23 +1,92 @@
 import { readFileSync } from "node:fs";
 import type { ModelAdapter } from "./adapter.js";
+import { AnthropicAdapter } from "./anthropic.js";
+import { OpenAiAdapter } from "./openai.js";
 import { type ScriptedFixture, ScriptedModel } from "./scripted.js";
 
+/** Thrown for a spec that can't be turned into an adapter; the message is written for the user. */
+export class ModelConfigError extends Error {}
+
+export type ModelRegistry = {
+  /** The spec from BRINDLE_MODEL, which channels without a model of their own use. */
+  defaultSpec: string | undefined;
+  /** The adapter for a spec, or for the default when null. One instance per spec, so a scripted model keeps its place. */
+  resolve(spec: string | null): ModelAdapter;
+  /** Throws ModelConfigError unless the spec could be resolved now, key included. */
+  validate(spec: string): void;
+};
+
+const openAiDefaultBase = "https://api.openai.com/v1";
+
 /**
- * Builds the model named by configuration. Returns undefined when none is configured, so the server
- * still starts and starting a run answers 503. Misconfiguration throws: failing at startup beats
- * failing on the first message.
+ * Reads model configuration from the environment. A spec is `scripted`, `openai:<model>` or
+ * `anthropic:<model>`. Keys come only from OPENAI_API_KEY and ANTHROPIC_API_KEY. OpenAI-compatible local
+ * servers are reached by pointing BRINDLE_OPENAI_BASE_URL at them, in which case no key is required.
+ * Misconfiguration throws: failing at startup beats failing on the first message.
  */
-export function modelFromEnv(
+export function modelRegistry(
   env: Record<string, string | undefined>,
   readFixture: (path: string) => string = (path) => readFileSync(path, "utf8"),
-): ModelAdapter | undefined {
-  const name = env.BRINDLE_MODEL?.trim();
-  if (!name) return undefined;
-  if (name !== "scripted") throw new Error(`BRINDLE_MODEL "${name}" is not supported yet; use "scripted".`);
+): ModelRegistry {
+  const cache = new Map<string, ModelAdapter>();
+  const value = (name: string) => env[name]?.trim() || undefined;
 
-  const path = env.BRINDLE_SCRIPTED_FIXTURE?.trim();
-  if (!path) throw new Error("BRINDLE_MODEL=scripted needs BRINDLE_SCRIPTED_FIXTURE, the path to a fixture JSON file.");
-  const fixture = JSON.parse(readFixture(path)) as ScriptedFixture;
-  if (!Array.isArray(fixture?.turns)) throw new Error(`${path} is not a scripted fixture: expected a "turns" array.`);
-  return new ScriptedModel(fixture);
+  const build = (spec: string): ModelAdapter => {
+    if (spec === "scripted") {
+      const path = value("BRINDLE_SCRIPTED_FIXTURE");
+      if (!path)
+        throw new ModelConfigError(
+          "The scripted model needs BRINDLE_SCRIPTED_FIXTURE, the path to a fixture JSON file.",
+        );
+      const fixture = JSON.parse(readFixture(path)) as ScriptedFixture;
+      if (!Array.isArray(fixture?.turns)) {
+        throw new ModelConfigError(`${path} is not a scripted fixture: expected a "turns" array.`);
+      }
+      return new ScriptedModel(fixture);
+    }
+    const colon = spec.indexOf(":");
+    const provider = colon < 0 ? "" : spec.slice(0, colon);
+    const model = colon < 0 ? "" : spec.slice(colon + 1).trim();
+    if (!model || (provider !== "openai" && provider !== "anthropic")) {
+      throw new ModelConfigError(
+        `"${spec}" is not a supported model; write openai:<model>, anthropic:<model> or scripted.`,
+      );
+    }
+    if (provider === "anthropic") {
+      const apiKey = value("ANTHROPIC_API_KEY");
+      if (!apiKey) throw new ModelConfigError("Set ANTHROPIC_API_KEY to use an Anthropic model.");
+      return new AnthropicAdapter({ model, apiKey, baseUrl: value("BRINDLE_ANTHROPIC_BASE_URL") });
+    }
+    const baseUrl = value("BRINDLE_OPENAI_BASE_URL");
+    const apiKey = value("OPENAI_API_KEY");
+    if (!apiKey && !baseUrl)
+      throw new ModelConfigError(
+        "Set OPENAI_API_KEY (or BRINDLE_OPENAI_BASE_URL for a local server) to use an OpenAI-compatible model.",
+      );
+    return new OpenAiAdapter({ model, apiKey, baseUrl: baseUrl ?? openAiDefaultBase });
+  };
+
+  const forSpec = (spec: string): ModelAdapter => {
+    let adapter = cache.get(spec);
+    if (!adapter) {
+      adapter = build(spec);
+      cache.set(spec, adapter);
+    }
+    return adapter;
+  };
+
+  const defaultSpec = value("BRINDLE_MODEL");
+  if (defaultSpec) forSpec(defaultSpec);
+  return {
+    defaultSpec,
+    resolve(spec) {
+      const chosen = spec ?? defaultSpec;
+      if (!chosen)
+        throw new ModelConfigError("No model is configured. Set BRINDLE_MODEL or choose one for this channel.");
+      return forSpec(chosen);
+    },
+    validate(spec) {
+      forSpec(spec);
+    },
+  };
 }
