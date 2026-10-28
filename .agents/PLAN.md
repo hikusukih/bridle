@@ -33,11 +33,11 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P1.1** The shell: bottom navigation on narrow screens, a side rail on wide ones, with Channels, Goals, Feed and Artifacts. Empty state for each. PWA manifest and icons so it installs on a phone. _needs P0.1_
 
-- [x] **P1.2** Storage: channels, runs and events tables. Create, rename, archive, restore and delete a channel. _needs P1.1_
+- [x] **P1.2** Storage: channels, **runs** and events tables. Create, rename, archive, restore and delete a channel. _needs P1.1_
 
 - [x] **P1.3** The model adapter contract and a **scripted model** that replays canned responses from a fixture, including tool calls and failures. A contract test suite every adapter must pass, passing against the scripted model. _needs P0.1_
 
-- [x] **P1.4** The run engine, minimal: a message starts a run, the loop calls the model, events persist and stream over SSE, cancel works, and the step, token and time limits end a run with a visible reason. _needs P1.2, P1.3_
+- [x] **P1.4** The run engine, minimal: a message starts a run, the loop calls the model, events persist and stream over SSE, cancel works, and the **step**, token and time limits end a run with a visible reason. _needs P1.2, P1.3_
 
 - [x] **P1.8** Server wiring: `main.ts` builds a run engine from a model chosen by configuration (`BRIDLE_MODEL=scripted` with a fixture file path, for development and acceptance until real adapters land in P2.2), calls `recoverInterrupted()` at startup, and the README says how to try it. _needs P1.4_
 
@@ -57,7 +57,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P2.3** Tools: the registry, `web_fetch` and `web_search`, with the approval card for external-effect tools (none of the first tools need it, but the path exists and is tested). _needs P2.1, P1.4_
 
-- [ ] **P2.4** Artifacts, storage and tool: `create_artifact`, files on disk with metadata in SQLite (kind, scope, the run that made it). Provenance (the channel's name and id, the run, the time) is metadata copied onto the artifact, not a link that cascades, so an artifact outlives the channel and run that made it. Deleting a channel deletes only the artifacts the user picks, rows and files together; the API takes that list, and with none given it keeps them all. Goal state documents (Phase 4) are owned by their goal and are not offered for deletion with a channel. _needs P2.3_
+- [ ] **P2.4** Artifacts, storage and tool: `create_artifact`, files on disk with metadata in SQLite (kind, **scope**, the run that made it). Provenance (the channel's name and id, the run, the time) is metadata copied onto the artifact, not a link that cascades, so an artifact outlives the channel and run that made it. Deleting a channel deletes only the artifacts the user picks, rows and files together; the API takes that list, and with none given it keeps them all. Goal state documents (Phase 4) are owned by their goal and are not offered for deletion with a channel. _needs P2.3_
 
 - [ ] **P2.4a** The gallery screen: newest first, filter by kind and scope, each item linked to its run (or marked "from deleted channel <name>" once that is gone), with the empty state from P1.1 until the first artifact exists. Deleting a channel that made artifacts asks first: keep all (the default), delete all, or choose which. _needs P2.4, P1.1_
 
@@ -71,7 +71,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 ## Phase 3 — long channels stay useful
 
-- [ ] **P3.1** **Design note:** context assembly (the layers of a prompt and a token budget for each), the purpose card, rolling compaction (when it triggers, what it must keep, how a summary is revised), and the drift nudge. _needs P2.1_
+- [x] **P3.1** **Design note:** context assembly (the layers of a prompt and a token budget for each), the purpose card, rolling compaction (when it triggers, what it must keep, how a summary is revised), and the drift nudge. _needs P2.1_
 
 - [ ] **P3.2** Context assembly with per-layer budgets, and a debug view showing exactly what a run sent. _needs P3.1, P1.4_
 
@@ -87,13 +87,13 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.8** **Design note:** the landing channel. The app opens on one persistent landing channel with no purpose card and no drift nudge, which answers in place and may then offer to switch to a matching channel; on accept, the messages that prompted the offer are copied into the target as a visible quoted block that the target's context also sees. No offer for one-offs. The note settles: how a topic is matched against purpose cards and how sure a match must be; when the offer appears and how often (a waved-off match is not offered again for that topic); which messages count as the ones that prompted it; how the quote is stored and shown; how much recent history the landing channel keeps in context; whether the landing channel offers a new channel when nothing matches; and how the user's view of what is related overrides the model's, both ways. With eval scenarios. _needs P3.1_
 
-- [ ] **P3.9** **Design note:** reference documents shared across channels (a cast of characters, contacts, topic notes) as living, versioned artifacts. The note settles: how they are stored next to goal state documents and artifacts; when a run looks one up (the user names a person or topic, or the purpose card does, and the request calls for it) and how a large one is read in part rather than whole; how the agent offers "Save this to People?" and how often; each document's home (starts where it was made, moves with the conversation when it is carried to another channel) and its origin, kept as a note; which writes need the user's confirmation (proposed: any change made from a channel other than its home, since origin stops counting once home moves); and the injection cases (a fetched page or a compromised model trying to plant or rewrite an entry). With eval scenarios. _needs P3.1, P2.4_
+- [ ] **P3.9** **Design note:** reference documents shared across channels (a cast of characters, contacts, topic notes) as living, versioned artifacts. The note settles: how they are stored next to goal state documents and artifacts; when a run looks one up (the user names a person or topic, or the purpose card does, and the user's message calls for it) and how a large one is read in part rather than whole; how the agent offers "Save this to People?" and how often; each document's home (starts where it was made, moves with the conversation when it is carried to another channel) and its origin, kept as a note; which writes need the user's confirmation (proposed: any change made from a channel other than its home, since origin stops counting once home moves); and the injection cases (a fetched page or a compromised model trying to plant or rewrite an entry). With eval scenarios. _needs P3.1, P2.4_
 
 - [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5, P3.7, P3.11_
 
 ## Phase 4 — goals and the scheduler
 
-- [ ] **P4.1** **Design note:** the goal model (brief, versioned state document, schedules, channel), how schedules are stored and fire, what happens to runs missed while the server was down, and concurrency limits. _needs P2.1_
+- [x] **P4.1** **Design note:** the goal model (brief, versioned state document, schedules, channel), how schedules are stored and fire, what happens to runs missed while the server was down, and concurrency limits. _needs P2.1_
 
 - [ ] **P4.2** The scheduler: persisted cron-like entries, survives restarts without double-firing, applies the missed-run policy, and keeps a log of what fired. _needs P4.1, P1.4_
 
