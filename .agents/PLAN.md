@@ -59,7 +59,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P2.4** Artifacts, storage and tool: `create_artifact`, files on disk with metadata in SQLite (kind, scope, the run that made it). Provenance (the channel's name and id, the run, the time) is metadata copied onto the artifact, not a link that cascades, so an artifact outlives the channel and run that made it. Deleting a channel deletes only the artifacts the user picks, rows and files together; the API takes that list, and with none given it keeps them all. Goal state documents (Phase 4) are owned by their goal and are not offered for deletion with a channel. _needs P2.3_
 
-- [ ] **P2.4a** The gallery screen: newest first, filter by kind and scope, each item linked to its run (or marked "from deleted channel <name>" once that is gone), with the empty state from P1.1 until the first artifact exists. Deleting a channel that made artifacts asks first: keep all (the default), delete all, or choose which. _needs P2.4, P1.1_
+- [ ] **P2.4a** The gallery screen: newest first, filter by kind and scope, each item linked to its run (or marked "from deleted channel <name>" once that is gone), with the empty state from P1.1 until the first artifact exists. Deleting a channel that made artifacts asks first: keep all (the default), delete all, or choose which. _needs P2.4, P2.13, P1.1_
+
+- [ ] **P2.13** Serving artifacts safely: an endpoint that returns an artifact's file only with `Content-Security-Policy: sandbox`, `X-Content-Type-Options: nosniff` and `Content-Disposition: attachment` for every kind except plain text and Markdown (rendered by the client as text, never as HTML), so a `page` artifact written by the model, possibly from fetched web text, cannot run script on the app's origin or reach the app's API. With a test that an HTML artifact containing a script is served with those headers. _needs P2.4_
 
 - [ ] **P2.9** `find_artifacts` and `read_artifact`: `read` tools that let a run in any channel or goal list artifacts by title, kind and provenance, with a text match, and read one's content, cut by the usual result sizing. Artifact content comes back as tool-result data like a fetched page, since an artifact may hold text from the web. With an eval scenario where a run in one channel finds and uses an artifact made in another. _needs P2.4, P2.3_
 
@@ -67,7 +69,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P2.8** Eval scenarios for injection through a fetched page: a `web_fetch` result tells the model to call an external-effect tool, and the run must stop at the approval card, with nothing sent if the user declines; and a result that tries to pass itself off as the user or the system must not change what the model is allowed to do. Scripted for the plumbing, with a live variant. _needs P2.3, P2.5_
 
-- [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.4a, P2.5, P2.8_
+- [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.4a, P2.5, P2.8, P2.13_
 
 ## Phase 3 — long channels stay useful
 
