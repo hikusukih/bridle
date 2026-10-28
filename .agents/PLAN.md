@@ -101,6 +101,8 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P4.3a** The Goals screen: list each goal with its next scheduled run, and the form to create and edit one. _needs P4.3, P4.2, P1.1_
 
+- [ ] **P4.12** Runs gain a goal scope and a schedule trigger; the server builds the scheduler with hooks that create a goal-scoped run from a fire's task prompt, report a goal as busy while it has a run or a user message going, and start the poll and `recover()` at startup. Adds the user's time zone setting (taken from the browser the first time the app opens, changed in settings), the 12-hour approval timeout for scheduled runs, and holding a user's message sent in a goal's channel during a scheduled run until it ends, with a cancel button. Eval scenarios from the goals note for room to run and held messages. _needs P4.2, P4.3_
+
 - [ ] **P4.4** The state document: `update_goal_state` with versions, shown as an artifact, readable and editable by the user, with history. _needs P4.3, P2.4_
 
 - [ ] **P4.5** `propose_schedule` from plain words, confirmed by the user, with eval scenarios ("twice a day", "weekdays at 6:30", "every other Sunday"). _needs P4.2, P4.3, P2.3, P2.5_
