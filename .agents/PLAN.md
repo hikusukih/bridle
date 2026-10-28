@@ -175,7 +175,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P9.3** The ACP delegate tool, verified with one real coding agent. _needs P9.2, P2.3_
 
-- [ ] **P9.4** **Review** of Phase 9. _needs P9.1, P9.2, P9.3_
+- [ ] **P9.6** Eval scenarios for MCP as an injection source: a plug-in tool's description (which goes to the model as part of the tool list) or its result tells the model to call an `external` tool, and the run must still stop at the approval card, with nothing sent if the user declines; and a tool the user left unclassified must ask for approval. Scripted for the plumbing, with a live variant. _needs P9.1, P2.8_
+
+- [ ] **P9.4** **Review** of Phase 9. _needs P9.1, P9.2, P9.3, P9.6_
 
 ## Acceptance (the whole thing)
 
