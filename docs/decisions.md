@@ -8,6 +8,8 @@ Open questions first, each with a recommendation. A session that hits a question
 - **Web search provider.** Recommend a self-hosted SearXNG-style JSON endpoint named by an environment variable, with `web_search` registered only when it is set, because it needs no key and nothing about the user's queries goes to a third party by default. A hosted API (Brave, Tavily and the like) can be added later as a second backend behind the same tool if SearXNG proves unreliable. Box P2.3 lands this as `BRINDLE_SEARCH_URL`; closing this question confirms it.
 - **Master key for the vault.** Recommend a key file outside the data directory with owner-only permissions, its path set by an environment variable, with an OS keychain as a later option. Decided in the Phase 6 design note.
 
+- **Backup and restore.** Everything a user would grieve to lose (channels, goal state documents, artifacts, the vault) lives in one data directory on one host. Recommend documenting, not building, a first answer: a README section saying to stop the server or use SQLite's online backup for the database and copy the artifacts directory alongside it, and, once the vault exists, to back up its key file separately from the data directory so that a stolen backup does not open the vault. A built-in export can follow if the manual steps prove error-prone.
+
 ## Settled
 
 - Public repo, MIT license.
