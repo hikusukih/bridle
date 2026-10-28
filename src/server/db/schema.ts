@@ -52,3 +52,27 @@ export const events = sqliteTable(
   },
   (t) => [uniqueIndex("events_run_seq_idx").on(t.runId, t.seq)],
 );
+
+// Provenance is copied onto the row rather than linked, so an artifact outlives the channel and run that made it: no foreign keys here.
+export const artifacts = sqliteTable(
+  "artifacts",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    // document | code | data | page | link
+    kind: text("kind").notNull(),
+    // channel | goal; goal-owned artifacts (state documents, Phase 4) are not offered for deletion with a channel.
+    scope: text("scope").notNull(),
+    // The scope's id when it is still live, kept so a channel's delete can find its own artifacts.
+    scopeId: text("scope_id").notNull(),
+    // The name the scope had when the artifact was made.
+    scopeName: text("scope_name").notNull(),
+    runId: text("run_id"),
+    // Path relative to the artifacts directory.
+    file: text("file").notNull(),
+    mime: text("mime").notNull(),
+    size: integer("size").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [index("artifacts_scope_idx").on(t.scope, t.scopeId), index("artifacts_created_idx").on(t.createdAt)],
+);
