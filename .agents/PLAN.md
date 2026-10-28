@@ -45,7 +45,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P1.5** Acceptance: two channels with separate histories survive a server restart and a reload; a failed run shows its error in place and the channel keeps working. _needs P1.1, P1.4, P1.7, P1.8_
 
-- [ ] **P1.6** **Review** of Phase 1. _needs P1.1, P1.2, P1.3, P1.4, P1.5, P1.7, P1.8_
+- [x] **P1.6** **Review** of Phase 1. _needs P1.1, P1.2, P1.3, P1.4, P1.5, P1.7, P1.8_
 
 ## Phase 2 — real models, tools and artifacts
 
@@ -57,11 +57,13 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P2.3** Tools: the registry, `web_fetch` and `web_search`, with the approval card for external-effect tools (none of the first tools need it, but the path exists and is tested). _needs P2.1, P1.4_
 
-- [ ] **P2.4** Artifacts: `create_artifact`, files on disk with metadata in SQLite, and the gallery screen (newest first, filter by kind and scope, each item linked to its run). _needs P2.3, P1.1_
+- [ ] **P2.4** Artifacts, storage and tool: `create_artifact`, files on disk with metadata in SQLite (kind, scope, the run that made it). Provenance (the channel's name and id, the run, the time) is metadata copied onto the artifact, not a link that cascades, so an artifact outlives the channel and run that made it. Deleting a channel deletes only the artifacts the user picks, rows and files together; the API takes that list, and with none given it keeps them all. Goal state documents (Phase 4) are owned by their goal and are not offered for deletion with a channel. _needs P2.3_
+
+- [ ] **P2.4a** The gallery screen: newest first, filter by kind and scope, each item linked to its run (or marked "from deleted channel <name>" once that is gone), with the empty state from P1.1 until the first artifact exists. Deleting a channel that made artifacts asks first: keep all (the default), delete all, or choose which. _needs P2.4, P1.1_
 
 - [x] **P2.5** Evals: the `evals/` runner, one scenario format, CI running all scenarios against the scripted model, and a manual command to run them against a real model. _needs P1.4, P0.2_
 
-- [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.5_
+- [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.4a, P2.5_
 
 ## Phase 3 — long channels stay useful
 
@@ -137,7 +139,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 ## Phase 8 — briefs and notifications
 
-- [ ] **P8.1** `speak`: text-to-speech through an OpenAI-compatible speech endpoint, saved as an audio artifact with a player in the gallery. _needs P2.3, P2.4_
+- [ ] **P8.1** `speak`: text-to-speech through an OpenAI-compatible speech endpoint, saved as an audio artifact with a player in the gallery. _needs P2.3, P2.4, P2.4a_
 
 - [ ] **P8.2** The daily digest: new feed items, goal check-ins, finished long runs, in-app and optionally to a webhook. _needs P5.1, P4.2_
 
