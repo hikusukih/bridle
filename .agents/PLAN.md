@@ -95,7 +95,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P4.1** **Design note:** the goal model (brief, versioned state document, schedules, channel), how schedules are stored and fire, what happens to runs missed while the server was down, and concurrency limits. _needs P2.1_
 
-- [ ] **P4.2** The scheduler: persisted cron-like entries, survives restarts without double-firing, applies the missed-run policy, and keeps a log of what fired. _needs P4.1, P1.4_
+- [x] **P4.2** The scheduler: persisted cron-like entries, survives restarts without double-firing, applies the missed-run policy, and keeps a log of what fired. _needs P4.1, P1.4_
 
 - [ ] **P4.3** Goals, server side: create, edit and archive a goal, and the goal's channel with its brief pinned. _needs P4.1, P1.2_
 
