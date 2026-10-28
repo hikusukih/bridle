@@ -79,7 +79,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.4** Rolling compaction, with eval scenarios: facts, decisions and commitments planted early survive several rounds of compaction. _needs P3.2, P2.5_
 
-- [ ] **P3.5** Drift nudge, with "move the last few messages to a new channel". _needs P3.3_
+- [ ] **P3.11** "New channel from here" on any run: the new channel is seeded from the summary that run used, the run itself, and a freshly refreshed summary of the source, which is left unchanged; a failed seed still creates the channel, empty, with a note. With eval scenarios. _needs P3.3, P3.4_
+
+- [ ] **P3.5** Drift nudge, whose accept is "New channel from here" (P3.11) on the latest run; nothing is moved out of the source. _needs P3.3, P3.11_
 
 - [ ] **P3.7** `search_history`: a `read` tool that finds passages in the channel's full stored transcript, including turns compaction has folded away, and returns them verbatim with the run they came from, cut by the usual result sizing. The compaction summary tells the model it exists. _needs P3.4, P2.3_
 
@@ -87,7 +89,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.9** **Design note:** reference documents shared across channels (a cast of characters, contacts, topic notes) as living, versioned artifacts. The note settles: how they are stored next to goal state documents and artifacts; when a run looks one up (the user names a person or topic, or the purpose card does, and the user's message calls for it) and how a large one is read in part rather than whole; how the agent offers "Save this to People?" and how often; each document's home (starts where it was made, moves with the conversation when it is carried to another channel) and its origin, kept as a note; which writes need the user's confirmation (proposed: any change made from a channel other than its home, since origin stops counting once home moves); and the injection cases (a fetched page or a compromised model trying to plant or rewrite an entry). With eval scenarios. _needs P3.1, P2.4_
 
-- [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5, P3.7_
+- [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5, P3.7, P3.11_
 
 ## Phase 4 — goals and the scheduler
 
