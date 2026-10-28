@@ -30,6 +30,8 @@ Long channels are the main way an agent like this degrades: the context balloons
 - **Drift nudges.** When the conversation wanders well away from the purpose card, the harness suggests once, inline, starting a new channel for the new topic, with one click that branches a new channel from there (below); nothing is moved out of the source. Short, focused channels are cheaper and better, and the UI makes them the easy path.
 - **Branching.** Any message can start a new channel "from here": the new channel opens with a summary built from the source's summary as it was at that message, the message itself, and a summary of the source refreshed at the moment of branching, and the source is left as it was. This is the by-hand path for a topic that has outgrown a catch-all channel.
 
+**The landing channel.** The app opens on one persistent landing channel, so the user can just type without choosing where a request belongs. It has no purpose card and no drift nudge, and it keeps only recent turns in context; older ones stay readable and searchable. It always answers in place. When the topic matches an existing channel well (judged against purpose cards), it offers to switch. On accept, the messages that prompted the offer are copied into the target channel as a visible quote, so both the user and that channel's context can see what was carried over, and the conversation continues there. Quick one-off questions get no offer; only a topic that runs several turns or comes back does. Fragmented chats are the failure this guards against, at the risk of an offer the user finds noisy, so offers can be waved off, and the user's judgment of what is related wins over the model's.
+
 ## Goals
 
 A goal is an ongoing project: "learn Rust", "keep me posted on shows at a local venue", "a daily audio brief of the news I care about". A goal has four parts:
@@ -49,6 +51,10 @@ The feed collects items that scheduled runs produce for the user to skim: new li
 
 Anything a run produces as a file, an image, audio, a document or a link is an artifact, indexed in one gallery and linked back to the run and scope that made it. Goal state documents appear here too.
 
+Artifacts belong to the user, not to the channel that made them. Any run in any channel or goal can find and read any artifact. Where it came from (channel, run, time) is metadata on the artifact, so it outlives the channel that made it; deleting a channel asks which of its artifacts go with it.
+
+**Reference documents** are living artifacts that belong to no single channel: a cast of characters (the people in the user's life and what to remember about each), contacts, and notes on topics the user keeps coming back to. Like a goal's state document they are versioned and editable by the user. They are not sent with every run: a run looks one up only when the user mentions a person or topic it covers, or the channel's purpose card does, and the request calls for it. The agent offers to add a durable fact ("Save this to People?") rather than writing it silently, and a change made from any channel other than the document's home is confirmed by the user. Home starts as the channel where the document was made and follows the conversation when it is carried to another channel (as from the landing channel), so the channel now working on a topic owns its documents. Where it was made is kept as a note but gives no edit rights once home has moved, so the landing channel, which reads the most untrusted text, does not keep rights to everything it ever started. The confirmation exists because text from the web or a compromised model must not quietly rewrite what every channel reads.
+
 ## Suggestions
 
 A suggestion run, at most daily, reads goal briefs and states, channel purpose cards and recent activity, and proposes a few cards: a next step on a goal, a schedule that would help it, a new goal, or a login to connect so a goal can do more. Accepting a card turns it into a run, a goal, a schedule or a credential request. Dismissed cards are remembered and don't come back. Suggestions can be turned off.
@@ -58,7 +64,7 @@ A suggestion run, at most daily, reads goal briefs and states, channel purpose c
 The model acts through tools in a registry. Each tool declares its **effect level**: read-only, local (writes only inside Brindle), or external (does something in the world, such as posting, buying or sending). External tools require the user's approval per call unless a goal grants standing permission for that tool. Built-in tools:
 
 - `web_fetch`, `web_search`, `read_feed` for reading the web.
-- `create_artifact`, `update_goal_state`, `search_history` for working inside Brindle.
+- `create_artifact`, `find_artifacts`, `read_artifact`, `update_goal_state`, `search_history` for working inside Brindle.
 - `propose_schedule`, `propose_goal` for creating structure, always confirmed by the user.
 - `speak` for text-to-speech, writing an audio artifact.
 - `use_credential` and `request_credential`, through the key manager (below).
