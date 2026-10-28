@@ -22,6 +22,20 @@ The total is the model's context window minus a reserve for the reply (the large
 
 Every run stores a **context report** event: each layer's token count, the summary version used (if any), the first and last run included in layer 4, and how many runs were left out. Branching reads the summary version from it. The debug view (P3.2) shows the report and, on demand, the exact messages sent, which are kept for the most recent 20 runs per channel and pruned after that so storage stays small.
 
+### Keeping the prompt cache warm
+
+Servers reuse the work for any prompt that starts with exactly the same tokens as the one before: llama.cpp's server keeps the last prompt per slot, and hosted APIs offer prefix caching. On a CPU-only host, reading a 20,000-token prompt from cold takes minutes, while reading only the newest turn takes seconds, so cache reuse is what makes a long channel usable locally. Assembly therefore follows one rule: **between two planned breaks, a run's request is the previous run's request with new messages appended, and nothing before them changes.** In practice:
+
+- **Nothing volatile in layers 1 to 3.** No timestamps, run ids, counters, the current date or per-run notes there. Anything that must change per run goes with the new message in layer 5.
+- **Deterministic rendering.** The same stored turns always render to the same bytes: fixed key order when tool calls and results are serialized, tool definitions in a fixed order, no whitespace that depends on anything but the content.
+- **A tool result is cut once.** It is sized when it arrives (as in the tools note) and the cut text is what is stored and resent; an old result is never re-cut with a different cap.
+- **Planned breaks only.** The start of the prompt may change only at a compaction fold, an emergency drop, a purpose card change, a change of model or tool set, or a release that changes the harness instructions. The context report records which of these happened, so the debug view shows when a cache miss was expected and any other miss is a bug.
+- **Breaks come in chunks.** An emergency drop removes runs down to the same 40% a fold aims for, not one run per message, so a channel over budget does not miss the cache on every message.
+- **Warm after a fold, where it is cheap.** After a fold, the harness may send the new prompt (layers 1 to 4) with a one-token reply so the next message pays only for itself. This is a per-model setting, on by default for local servers and off for hosted ones, where it costs money.
+- **Report what was reused.** The context report records the expected reusable prefix in tokens and, where the server reports it (llama.cpp's cached token count, Anthropic's cache reads, OpenAI's cached tokens), the actual one. The Anthropic adapter marks a cache breakpoint after layer 3 and after the history, since that API caches only where asked.
+
+Housekeeping calls send a different prompt and, on a server with one slot, evict the channel's cached prompt. The README's local setup should run llama.cpp's server with at least two slots and say that its context size is split across them.
+
 ### The purpose card
 
 A `purpose_cards` table keeps each channel's card as versions: channel id, version, text, source (`drafted` or `edited`) and a timestamp, with the highest version current. Versions are append-only; the user can see earlier ones and restore one, which writes it again as a new version, and the context report records which version a run used. After a channel's third completed run, one utility-model call drafts one or two sentences from those exchanges. The user sees it under the channel name and can edit it in place; an edited card is never overwritten, and a new draft happens only when the user asks for one. A failed draft is silent and retried after later runs, at most three times in all. The card is sent in layer 2 on every run and is never part of the history, so compaction cannot fold it away. A goal's channel gets no drafted card: its brief already says what it is for, and the drift check compares against the brief.
@@ -46,7 +60,14 @@ The seed belongs in the summary layer, not the purpose card: the card is short, 
 
 ### Which model does the housekeeping
 
-Drafting, compaction, branch seeds and drift checks use a **utility model**: `BRINDLE_UTILITY_MODEL`, defaulting to the channel's own model. The architecture's cheap-model-for-summaries default is therefore a setting, not new machinery. Housekeeping calls are not user runs, so they do not count against run limits; their token use is recorded on the summary rows and shown in the debug view.
+Drafting, compaction, branch seeds and drift checks use a **utility model**: `BRINDLE_UTILITY_MODEL`, defaulting to the channel's own model. The architecture's cheap-model-for-summaries default is therefore a setting, not new machinery. Housekeeping calls are not user runs, so they do not count against a run's limits; their token use is recorded on the summary rows and shown in the debug view. They get limits of their own instead, because their cost has a different shape: a fold reads the runs being folded from cold, since its prompt shares no prefix with the channel's, and on a CPU-only host that can take several minutes. Nobody waits on it (it runs after a run ends, and the emergency drop covers a message that arrives meanwhile), so its limit can be long without hurting anyone:
+
+- **Time:** `BRINDLE_HOUSEKEEPING_TIMEOUT`, default 10 minutes, separate from the run's 2-minute limit. One call at a time per channel; a new fold does not start while one is in flight.
+- **Steps:** one model call with no tools, plus the single "shorten it" retry.
+- **Output:** the summary cap plus a small margin; a longer reply is treated as over the cap.
+- A call that hits a limit counts as a failed fold: nothing changes and history stays verbatim until the next attempt. The debug view shows which limit ended it.
+
+Branch seeds use the same limits, but the user is waiting on one, so the new channel shows that its seed is being written until it lands or fails.
 
 ## Rejected
 
@@ -68,10 +89,14 @@ Scripted-model scenarios run in CI (P2.5's runner, with a scripted utility model
 - **Injection** (live): a fetched page in a folded turn contains "ignore your instructions and ..."; the next summary must report it as page content or omit it, and the following reply must not obey it.
 - **Drift** (scripted classifier, then live): twenty on-topic turns produce no nudge; a switch to an unrelated topic produces exactly one; dismiss silences it; accept creates a branched channel and leaves the source's runs unchanged.
 - **Branch** (scripted, then live): branching writes a seed summary within the cap and leaves the source's runs, summary and card unchanged; a failed seed still creates an empty channel with the note; branching from an older run reads that run's summary version, the run and a refreshed latest summary, and nothing else from the source; the refresh leaves the source's own summary versions unchanged. Live: plant three facts in a source channel, branch, and ask for each in the new channel; pass means all three are stated correctly in at least two of three trials.
+- **Cache stability** (scripted): two consecutive runs with no planned break between them produce requests where the earlier one is a byte-for-byte prefix of the later; each kind of planned break is recorded in the context report; an emergency drop removes runs down to 40%. Live checks against a real server, that the cache is actually reused, belong to the local integration suite rather than CI.
+- **Housekeeping limits** (scripted): a fold that hits its time or output limit leaves history verbatim and is shown in the debug view; a second fold does not start while one is in flight.
 - **Purpose card** (scripted): drafted once after the third run, never overwritten once edited, every change and restore adds a version, retried at most three times after failures.
 
 ## Open for the user
 
-- The 32,000-token default window, and whether to look up a model's real window in configuration only, as proposed, or ask the provider.
+- The 32,000-token default window, and whether to look up a model's real window in configuration only, as proposed, or ask the provider. llama.cpp's server reports its per-slot context size at `/props`, so for that server asking is cheap and avoids a mismatch.
+- Whether the run's own 2-minute time limit should become a per-model setting. A chat turn on a CPU-only local model that misses the cache can take longer than that on its own.
+- The 10-minute housekeeping limit, and whether warming the cache after a fold should default on for local servers.
 - The thresholds (fold at 70%, down to 40%) and the 20-run limit on stored prompts.
 - Whether branching should live in P3.5 with the nudge (proposed, since both create a channel from another's runs) or get its own box.
