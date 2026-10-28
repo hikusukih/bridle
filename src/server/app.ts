@@ -13,6 +13,7 @@ import {
   restoreChannel,
   setChannelModel,
 } from "./channels.js";
+import { runContext } from "./context.js";
 import type { Db } from "./db/index.js";
 import { appMeta } from "./db/schema.js";
 import { channelTranscript, type RunEngine, RunError, type RunEvent } from "./runs.js";
@@ -74,6 +75,8 @@ export function createApp({ db, engine, models, clientRoot }: AppOptions) {
     const body = (await c.req.json().catch(() => ({}))) as { text?: unknown };
     return c.json(needEngine().start(c.req.param("id"), body.text), 201);
   });
+  // What each request of the run sent: layer sizes always, the exact messages for a channel's 20 newest runs.
+  app.get("/api/runs/:id/context", (c) => c.json(runContext(db, c.req.param("id"))));
   app.get("/api/runs/:id", (c) => c.json(needEngine().get(c.req.param("id"))));
   app.post("/api/runs/:id/approvals/:callId", async (c) => {
     const body = (await c.req.json().catch(() => ({}))) as { decision?: unknown };

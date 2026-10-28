@@ -52,3 +52,27 @@ export const events = sqliteTable(
   },
   (t) => [uniqueIndex("events_run_seq_idx").on(t.runId, t.seq)],
 );
+
+// One row per model request: what assembly counted and, for the most recent runs of a channel, the exact messages sent.
+export const contextReports = sqliteTable(
+  "context_reports",
+  {
+    id: text("id").primaryKey(),
+    runId: text("run_id")
+      .notNull()
+      .references(() => runs.id, { onDelete: "cascade" }),
+    channelId: text("channel_id")
+      .notNull()
+      .references(() => channels.id, { onDelete: "cascade" }),
+    step: integer("step").notNull(),
+    // JSON ContextReport.
+    report: text("report").notNull(),
+    // JSON Message[]; set to null once the run falls out of the channel's most recent 20.
+    messages: text("messages"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [
+    index("context_reports_channel_idx").on(t.channelId, t.createdAt),
+    index("context_reports_run_idx").on(t.runId, t.step),
+  ],
+);

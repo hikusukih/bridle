@@ -204,6 +204,49 @@ function EventLine({ event }: { event: RunEvent }) {
   }
 }
 
+type SentContext = {
+  step: number;
+  report: {
+    window: number;
+    budget: number;
+    layers: { name: string; tokens: number }[];
+    runsDropped: number;
+    breaks: string[];
+  };
+  messages: { role: string; content: string }[] | null;
+};
+
+/** What the model was sent for one run: layer sizes, and the exact messages while the server still keeps them. */
+function SentView({ runId }: { runId: string }) {
+  const [sent, setSent] = useState<SentContext[] | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const load = () =>
+    api<SentContext[]>(`/api/runs/${runId}/context`).then(setSent, (e: Error) => setProblem(e.message));
+  return (
+    <details className="text-xs text-slate-600" onToggle={(e) => e.currentTarget.open && !sent && load()}>
+      <summary className="cursor-pointer">What was sent</summary>
+      <Problem message={problem} />
+      {sent?.length === 0 && <p>No request was recorded for this run.</p>}
+      {sent?.map((req) => (
+        <div key={req.step} className="mt-2 flex flex-col gap-1">
+          <p>
+            Step {req.step}: {req.report.layers.map((l) => `${l.name} ${l.tokens}`).join(", ")} of {req.report.budget}{" "}
+            tokens
+            {req.report.runsDropped ? `; ${req.report.runsDropped} older run(s) left out` : ""}
+          </p>
+          {req.messages ? (
+            <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-slate-100 p-2">
+              {req.messages.map((m) => `${m.role}: ${m.content}`).join("\n\n")}
+            </pre>
+          ) : (
+            <p>The exact messages are only kept for a channel's 20 newest runs.</p>
+          )}
+        </div>
+      ))}
+    </details>
+  );
+}
+
 function ApprovalCard(props: {
   tool: string;
   reason: string;
@@ -404,6 +447,7 @@ function ChannelView({ id }: { id: string }) {
                 </p>
               )}
             {run.status === "cancelled" && <p className="text-xs text-slate-500">Cancelled.</p>}
+            {run.status !== "running" && run.status !== "waiting" && <SentView runId={run.id} />}
           </section>
         ))}
       </div>
