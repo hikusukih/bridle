@@ -175,7 +175,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P9.3** The ACP delegate tool, verified with one real coding agent. _needs P9.2, P2.3_
 
-- [ ] **P9.4** **Review** of Phase 9. _needs P9.1, P9.2, P9.3_
+- [ ] **P9.5** MCP servers over streamable HTTP: the same tool registration as the stdio client, for servers reached by URL, with the bearer credential held as a key-manager handle that is never in `mcp.json`, and the request refused for any host outside the handle's scope. Hosted MCP servers are mostly HTTP and OAuth, so stdio alone leaves out most of them. _needs P9.1, P6.3_
+
+- [ ] **P9.4** **Review** of Phase 9. _needs P9.1, P9.2, P9.3, P9.5_
 
 ## Acceptance (the whole thing)
 
