@@ -15,7 +15,20 @@ import {
 } from "./channels.js";
 import type { Db } from "./db/index.js";
 import { appMeta } from "./db/schema.js";
+import {
+  archiveGoal,
+  briefHistory,
+  createGoal,
+  deleteGoal,
+  editGoal,
+  GoalError,
+  getGoal,
+  listGoals,
+  restoreBrief,
+  restoreGoal,
+} from "./goals.js";
 import { channelTranscript, type RunEngine, RunError, type RunEvent } from "./runs.js";
+import { ScopeCardError } from "./scope-cards.js";
 
 export type Greeting = {
   message: string;
@@ -46,6 +59,10 @@ export function createApp({ db, engine, models, clientRoot }: AppOptions) {
 
   app.onError((err, c) => {
     if (err instanceof ChannelError) {
+      const status = err.code === "not_found" ? 404 : err.code === "archived" ? 409 : 400;
+      return c.json({ error: err.code, message: err.message }, status);
+    }
+    if (err instanceof GoalError || err instanceof ScopeCardError) {
       const status = err.code === "not_found" ? 404 : err.code === "archived" ? 409 : 400;
       return c.json({ error: err.code, message: err.message }, status);
     }
@@ -134,6 +151,22 @@ export function createApp({ db, engine, models, clientRoot }: AppOptions) {
   app.post("/api/channels/:id/restore", (c) => c.json(restoreChannel(db, c.req.param("id"))));
   app.delete("/api/channels/:id", (c) => {
     deleteChannel(db, c.req.param("id"));
+    return c.body(null, 204);
+  });
+
+  const body = async (c: Context) => (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  app.get("/api/goals", (c) => c.json(listGoals(db, { archived: c.req.query("archived") === "true" })));
+  app.post("/api/goals", async (c) => c.json(createGoal(db, await body(c)), 201));
+  app.get("/api/goals/:id", (c) => c.json(getGoal(db, c.req.param("id"))));
+  app.patch("/api/goals/:id", async (c) => c.json(editGoal(db, c.req.param("id"), await body(c))));
+  app.get("/api/goals/:id/brief-versions", (c) => c.json(briefHistory(db, c.req.param("id"))));
+  app.post("/api/goals/:id/brief-versions/:version/restore", (c) =>
+    c.json(restoreBrief(db, c.req.param("id"), Number(c.req.param("version")))),
+  );
+  app.post("/api/goals/:id/archive", (c) => c.json(archiveGoal(db, c.req.param("id"))));
+  app.post("/api/goals/:id/restore", (c) => c.json(restoreGoal(db, c.req.param("id"))));
+  app.delete("/api/goals/:id", (c) => {
+    deleteGoal(db, c.req.param("id"));
     return c.body(null, 204);
   });
 

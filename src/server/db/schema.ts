@@ -52,3 +52,35 @@ export const events = sqliteTable(
   },
   (t) => [uniqueIndex("events_run_seq_idx").on(t.runId, t.seq)],
 );
+
+// An ongoing project with its own channel. The brief lives in scope_cards; the state document arrives with P4.4.
+export const goals = sqliteTable("goals", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  // active | archived
+  status: text("status").notNull(),
+  // Deleting the channel deletes the goal, since a goal without its channel has nowhere to run.
+  channelId: text("channel_id")
+    .notNull()
+    .references(() => channels.id, { onDelete: "cascade" }),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+// A channel's purpose card and a goal's brief share this table: append-only versions, the highest is current.
+export const scopeCards = sqliteTable(
+  "scope_cards",
+  {
+    id: text("id").primaryKey(),
+    // channel | goal
+    scopeKind: text("scope_kind").notNull(),
+    scopeId: text("scope_id").notNull(),
+    version: integer("version").notNull(),
+    text: text("text").notNull(),
+    // user | agent
+    author: text("author").notNull(),
+    confirmed: integer("confirmed", { mode: "boolean" }).notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [uniqueIndex("scope_cards_version_idx").on(t.scopeKind, t.scopeId, t.version)],
+);
