@@ -4,4 +4,4 @@ The stored prompt for both box-worker scheduled tasks. Paste everything below th
 
 ---
 
-Work the Bridle queue as CLAUDE.md describes: read CLAUDE.md and PLAN.md on origin/main, then take exactly one box (resuming a cut-off one first if there is one) and land it the way CLAUDE.md says, including filing any proposals it turned up. If nothing is free, change nothing and say why. Your final message gives the box ID, the PR link, any proposal PRs, and anything waiting on the user.
+Work the Brindle queue as CLAUDE.md describes: read CLAUDE.md and PLAN.md on origin/main, then take exactly one box (resuming a cut-off one first if there is one) and land it the way CLAUDE.md says, including filing any proposals it turned up. If nothing is free, change nothing and say why. Your final message gives the box ID, the PR link, any proposal PRs, and anything waiting on the user.

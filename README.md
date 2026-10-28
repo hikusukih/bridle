@@ -1,6 +1,6 @@
 # Brindle
 
-[![CI](https://github.com/hikusukih/bridle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hikusukih/bridle/actions/workflows/ci.yml)
+[![CI](https://github.com/hikusukih/brindle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hikusukih/brindle/actions/workflows/ci.yml)
 
 A self-hosted personal agent with a calm, phone-friendly home: persistent **channels** for conversations, **goals** that keep their own state and act on a schedule, a **feed** of what scheduled work found (also published as RSS), one gallery of **artifacts**, and opt-in **suggestions**. Models are pluggable; credentials go through a key manager that keeps them out of the model's sight.
 
