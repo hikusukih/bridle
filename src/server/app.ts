@@ -11,6 +11,7 @@ import {
   listChannels,
   renameChannel,
   restoreChannel,
+  setChannelModel,
 } from "./channels.js";
 import type { Db } from "./db/index.js";
 import { appMeta } from "./db/schema.js";
@@ -25,17 +26,19 @@ type AppOptions = {
   db: Db;
   // Absent until a real adapter is configured; starting a run then answers 503.
   engine?: RunEngine;
+  // What channels may be set to use; absent, setting a channel's model is refused.
+  models?: { defaultSpec?: string; validate: (spec: string) => void };
   // Built client to serve; absent in development, where Vite serves it.
   clientRoot?: string;
 };
 
-export function createApp({ db, engine, clientRoot }: AppOptions) {
+export function createApp({ db, engine, models, clientRoot }: AppOptions) {
   const app = new Hono();
 
   app.get("/api/greeting", (c) => {
     const row = db.select().from(appMeta).where(eq(appMeta.key, "first_started_at")).get();
     const greeting: Greeting = {
-      message: "Hello from Bridle.",
+      message: "Hello from Brindle.",
       since: row?.value ?? new Date().toISOString(),
     };
     return c.json(greeting);
@@ -47,7 +50,14 @@ export function createApp({ db, engine, clientRoot }: AppOptions) {
       return c.json({ error: err.code, message: err.message }, status);
     }
     if (err instanceof RunError) {
-      const status = err.code === "not_found" ? 404 : err.code === "invalid_text" ? 400 : 409;
+      const status =
+        err.code === "not_found"
+          ? 404
+          : err.code === "invalid_text" || err.code === "invalid_decision"
+            ? 400
+            : err.code === "no_model"
+              ? 503
+              : 409;
       return c.json({ error: err.code, message: err.message }, status);
     }
     if (err instanceof HTTPException) return err.getResponse();
@@ -65,6 +75,10 @@ export function createApp({ db, engine, clientRoot }: AppOptions) {
     return c.json(needEngine().start(c.req.param("id"), body.text), 201);
   });
   app.get("/api/runs/:id", (c) => c.json(needEngine().get(c.req.param("id"))));
+  app.post("/api/runs/:id/approvals/:callId", async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as { decision?: unknown };
+    return c.json(needEngine().decide(c.req.param("id"), c.req.param("callId"), body.decision));
+  });
   app.post("/api/runs/:id/cancel", (c) => c.json(needEngine().cancel(c.req.param("id"))));
 
   // Replays stored events, then follows the live run. A reconnecting client sends Last-Event-ID (the last seq it saw).
@@ -106,6 +120,16 @@ export function createApp({ db, engine, clientRoot }: AppOptions) {
   app.get("/api/channels", (c) => c.json(listChannels(db, { archived: c.req.query("archived") === "true" })));
   app.post("/api/channels", async (c) => c.json(createChannel(db, await nameFrom(c)), 201));
   app.patch("/api/channels/:id", async (c) => c.json(renameChannel(db, c.req.param("id"), await nameFrom(c))));
+  app.get("/api/models", (c) => c.json({ default: models?.defaultSpec ?? null }));
+  app.post("/api/channels/:id/model", async (c) => {
+    const body = (await c.req.json().catch(() => ({}))) as { model?: unknown };
+    const validate =
+      models?.validate ??
+      (() => {
+        throw new Error("No models can be chosen on this server.");
+      });
+    return c.json(setChannelModel(db, c.req.param("id"), body.model, validate));
+  });
   app.post("/api/channels/:id/archive", (c) => c.json(archiveChannel(db, c.req.param("id"))));
   app.post("/api/channels/:id/restore", (c) => c.json(restoreChannel(db, c.req.param("id"))));
   app.delete("/api/channels/:id", (c) => {

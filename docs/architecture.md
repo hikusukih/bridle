@@ -1,6 +1,6 @@
 # Architecture
 
-Bridle is a self-hosted personal agent: a harness that runs work for one person, and a phone-friendly web app over it. Five surfaces sit on top: **channels**, **goals**, the **feed**, **artifacts**, and **suggestions**. Underneath them all is one primitive, the **run**.
+Brindle is a self-hosted personal agent: a harness that runs work for one person, and a phone-friendly web app over it. Five surfaces sit on top: **channels**, **goals**, the **feed**, **artifacts**, and **suggestions**. Underneath them all is one primitive, the **run**.
 
 Most of the work is the harness, not the UI. The UI is standard; how context is assembled, how long conversations stay useful, how goals keep state and act on a schedule, and how credentials are kept away from the model are the parts that decide whether this is any good. Those parts are designed in short notes under `docs/design/` and reviewed before they are built (see `CLAUDE.md`).
 
@@ -29,6 +29,8 @@ Long channels are the main way an agent like this degrades: the context balloons
 - **Rolling compaction.** Past a token threshold, the oldest turns are folded into a running summary, and only the summary plus recent turns are sent. The full transcript stays stored and searchable; compaction changes what the model sees, never what the user can read. Compaction keeps decisions, facts the user stated, open questions and commitments, and drops chatter. That claim is tested by the eval suite, not assumed.
 - **Drift nudges.** When the conversation wanders well away from the purpose card, the harness suggests once, inline, starting a new channel for the new topic, with a one-click "move the last few messages there". Short, focused channels are cheaper and better, and the UI makes them the easy path.
 
+**The landing channel.** The app opens on one persistent landing channel, so the user can just type without choosing where a request belongs. It has no purpose card and no drift nudge, and it keeps only recent turns in context; older ones stay readable and searchable. It always answers in place. When the topic matches an existing channel well (judged against purpose cards), it offers to switch. On accept, the messages that prompted the offer are copied into the target channel as a visible quote, so both the user and that channel's context can see what was carried over, and the conversation continues there. Quick one-off questions get no offer; only a topic that runs several turns or comes back does. Fragmented chats are the failure this guards against, at the risk of an offer the user finds noisy, so offers can be waved off, and the user's judgment of what is related wins over the model's.
+
 ## Goals
 
 A goal is an ongoing project: "learn Rust", "keep me posted on shows at a local venue", "a daily audio brief of the news I care about". A goal has four parts:
@@ -48,16 +50,18 @@ The feed collects items that scheduled runs produce for the user to skim: new li
 
 Anything a run produces as a file, an image, audio, a document or a link is an artifact, indexed in one gallery and linked back to the run and scope that made it. Goal state documents appear here too.
 
+Artifacts belong to the user, not to the channel that made them. Any run in any channel or goal can find and read any artifact. Where it came from (channel, run, time) is metadata on the artifact, so it outlives the channel that made it; deleting a channel asks which of its artifacts go with it.
+
 ## Suggestions
 
 A suggestion run, at most daily, reads goal briefs and states, channel purpose cards and recent activity, and proposes a few cards: a next step on a goal, a schedule that would help it, a new goal, or a login to connect so a goal can do more. Accepting a card turns it into a run, a goal, a schedule or a credential request. Dismissed cards are remembered and don't come back. Suggestions can be turned off.
 
 ## Tools
 
-The model acts through tools in a registry. Each tool declares its **effect level**: read-only, local (writes only inside Bridle), or external (does something in the world, such as posting, buying or sending). External tools require the user's approval per call unless a goal grants standing permission for that tool. Built-in tools:
+The model acts through tools in a registry. Each tool declares its **effect level**: read-only, local (writes only inside Brindle), or external (does something in the world, such as posting, buying or sending). External tools require the user's approval per call unless a goal grants standing permission for that tool. Built-in tools:
 
 - `web_fetch`, `web_search`, `read_feed` for reading the web.
-- `create_artifact`, `update_goal_state`, `search_history` for working inside Bridle.
+- `create_artifact`, `find_artifacts`, `read_artifact`, `update_goal_state`, `search_history` for working inside Brindle.
 - `propose_schedule`, `propose_goal` for creating structure, always confirmed by the user.
 - `speak` for text-to-speech, writing an audio artifact.
 - `use_credential` and `request_credential`, through the key manager (below).

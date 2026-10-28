@@ -16,11 +16,11 @@ describe("App", () => {
       vi.fn(async (url: string) =>
         url.startsWith("/api/channels")
           ? Response.json([])
-          : Response.json({ message: "Hello from Bridle.", since: "2026-01-02T03:04:05.000Z" }),
+          : Response.json({ message: "Hello from Brindle.", since: "2026-01-02T03:04:05.000Z" }),
       ),
     );
     render(<App />);
-    expect(await screen.findByText("Hello from Bridle.")).toBeTruthy();
+    expect(await screen.findByText("Hello from Brindle.")).toBeTruthy();
   });
 
   it("says so when the server cannot be reached", async () => {
@@ -38,7 +38,7 @@ describe("App", () => {
       vi.fn(async (url: string) =>
         url.startsWith("/api/channels")
           ? Response.json([])
-          : Response.json({ message: "Hello from Bridle.", since: "2026-01-02T03:04:05.000Z" }),
+          : Response.json({ message: "Hello from Brindle.", since: "2026-01-02T03:04:05.000Z" }),
       ),
     );
     render(<App />);
