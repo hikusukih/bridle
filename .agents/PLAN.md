@@ -61,6 +61,10 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P2.5** Evals: the `evals/` runner, one scenario format, CI running all scenarios against the scripted model, and a manual command to run them against a real model. _needs P1.4, P0.2_
 
+- [ ] **P2.10** Model-boundary integration suite: one set of tests that runs against any OpenAI-compatible server named by `BRINDLE_BOUNDARY_URL`, with a fake llama.cpp server in the repo as the default target so it runs in CI on every PR. The fake server answers chat completions and `/props`, rejects a request over its window the way llama.cpp does, reports cached tokens as the longest common prefix with its previous prompt, and can be told to stall. The tests check that the window is read and a configured one larger than the server's is refused; that Brindle never sends a request it estimates is over the window and turns a server's length rejection into its own "too long for the model" error; that token counts match the server's; that a streamed tool call round-trips; that a request extending the previous one is reported as reusing the cache; and that the run and housekeeping time limits end a stalled call cleanly. One case drives the web app in a browser through a whole run. Pointed at a real server by hand, the same suite prints a report of prompt read speed, reply speed and cache reuse per case. The README's local setup section says how to start llama.cpp's server for Brindle (at least two slots, and that its context size is split across them). _needs P2.11_
+
+- [ ] **P2.12** The boundary suite in CI against a real llama.cpp server running a tiny model: a pinned llama.cpp release and a pinned, checksummed model of a few hundred megabytes at most, both cached between runs. Reply quality does not matter; real tokenization, real length rejections and real cache reuse do. A case the tiny model cannot do, such as a tool call, is skipped against it with a stated reason. If the job takes more than a few minutes it runs nightly instead of on every PR, and the PR says which. _needs P2.10_
+
 - [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.5_
 
 ## Phase 3 — long channels stay useful
@@ -74,6 +78,8 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 - [ ] **P3.4** Rolling compaction, with eval scenarios: facts, decisions and commitments planted early survive several rounds of compaction. _needs P3.2, P2.5_
 
 - [ ] **P3.5** Drift nudge, with "move the last few messages to a new channel". _needs P3.3_
+
+- [ ] **P3.10** The boundary suite covers context assembly: a 30-turn conversation with at least one compaction fold, in CI against the fake server and the tiny model, where every turn with no planned break in its context report reuses the cache and every cache miss matches a recorded break; the assembled request never exceeds the server's window; a fold finishes within the housekeeping time limit; and with warming on, the turn after a fold reads only its own new tokens. Run by hand against a real server, its report adds cache reuse per turn and the time each fold took, which is the data for tuning the per-model limits. _needs P2.10, P3.2, P3.4_
 
 - [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5_
 

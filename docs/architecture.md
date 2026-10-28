@@ -82,7 +82,7 @@ Goals that act on the user's behalf need logins and API keys. The key manager is
 
 ## Evals
 
-Harness quality is measured, not asserted. `evals/` holds scenarios replayed against the harness: compaction keeps the facts planted early in a long channel; "read this twice a day" becomes the right schedule; a goal's state document updates correctly after a lesson; injected pages fail to move secrets. CI runs every scenario against a scripted model, so the plumbing is checked on every PR. The same scenarios run against a real model on demand, which costs money and is done when a harness change could move the results.
+Harness quality is measured, not asserted. `evals/` holds scenarios replayed against the harness: compaction keeps the facts planted early in a long channel; "read this twice a day" becomes the right schedule; a goal's state document updates correctly after a lesson; injected pages fail to move secrets. CI runs every scenario against a scripted model, so the plumbing is checked on every PR. The same scenarios run against a real model on demand, which costs money and is done when a harness change could move the results. A separate model-boundary suite checks how Brindle meets a model server: context windows, length errors, cache reuse and time limits. It runs in CI against a fake server and a tiny real model, and by hand against the user's own server, where it also measures the speeds the per-model limits are tuned from.
 
 ## Storage and delivery
 
