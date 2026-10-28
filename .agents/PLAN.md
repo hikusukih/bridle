@@ -169,7 +169,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 ## Phase 9 — plug-ins
 
-- [ ] **P9.1** MCP client: configure MCP servers, their tools join the registry with an effect level the user assigns. _needs P2.3_
+- [x] **P9.1** MCP client: configure MCP servers, their tools join the registry with an effect level the user assigns. _needs P2.3_
 
 - [ ] **P9.2** **Design note:** ACP delegates (spawning an external agent, mapping a run to its session, surfacing its permission requests as approval cards), after checking the protocol's current state. _needs P2.1_
 
