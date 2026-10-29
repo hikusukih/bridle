@@ -55,7 +55,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P2.2a** Model choice per channel, keys from environment variables: a model setting on each channel, the server building the adapter from configuration, and the channel view showing which model it uses. `npm run evals -- --live` builds its model from the same configuration and drops `BRIDLE_EVAL_MODEL_MODULE`. _needs P2.2, P1.8, P2.5_
 
-- [x] **P2.3** Tools: the registry, `web_fetch` and `web_search`, with the approval card for external-effect tools (none of the first tools need it, but the path exists and is tested). _needs P2.1, P1.4_
+- [x] **P2.3** Tools: the registry, `web_fetch` and `web_search`, with the approval **card** for external-effect tools (none of the first tools need it, but the path exists and is tested). _needs P2.1, P1.4_
 
 - [ ] **P2.4** Artifacts, storage and tool: `create_artifact`, files on disk with metadata in SQLite (kind, **scope**, the run that made it). Provenance (the channel's name and id, the run, the time) is metadata copied onto the artifact, not a link that cascades, so an artifact outlives the channel and run that made it. Deleting a channel deletes only the artifacts the user picks, rows and files together; the API takes that list, and with none given it keeps them all. Goal state documents (Phase 4) are owned by their goal and are not offered for deletion with a channel. _needs P2.3_
 
@@ -71,11 +71,11 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 ## Phase 3 — long channels stay useful
 
-- [x] **P3.1** **Design note:** context assembly (the layers of a prompt and a token budget for each), the purpose card, rolling compaction (when it triggers, what it must keep, how a summary is revised), and the drift nudge. _needs P2.1_
+- [x] **P3.1** **Design note:** context assembly (the layers of a prompt and a token budget for each), the purpose statement, rolling compaction (when it triggers, what it must keep, how a summary is revised), and the drift nudge. _needs P2.1_
 
 - [ ] **P3.2** Context assembly with per-layer budgets, and a debug view showing exactly what a run sent. _needs P3.1, P1.4_
 
-- [ ] **P3.3** Purpose cards: drafted after the first few exchanges, editable, sent with every run. _needs P3.2_
+- [ ] **P3.3** Purpose statements: drafted after the first few exchanges, editable, sent with every run. _needs P3.2_
 
 - [ ] **P3.4** Rolling compaction, with eval scenarios: facts, decisions and commitments planted early survive several rounds of compaction. _needs P3.2, P2.5_
 
@@ -85,9 +85,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.7** `search_history`: a `read` tool that finds passages in the channel's full stored transcript, including turns compaction has folded away, and returns them verbatim with the run they came from, cut by the usual result sizing. The compaction summary tells the model it exists. _needs P3.4, P2.3_
 
-- [ ] **P3.8** **Design note:** the landing channel. The app opens on one persistent landing channel with no purpose card and no drift nudge, which answers in place and may then offer to switch to a matching channel; on accept, the messages that prompted the offer are copied into the target as a visible quoted block that the target's context also sees. No offer for one-offs. The note settles: how a topic is matched against purpose cards and how sure a match must be; when the offer appears and how often (a waved-off match is not offered again for that topic); which messages count as the ones that prompted it; how the quote is stored and shown; how much recent history the landing channel keeps in context; whether the landing channel offers a new channel when nothing matches; and how the user's view of what is related overrides the model's, both ways. With eval scenarios. _needs P3.1_
+- [ ] **P3.8** **Design note:** the landing channel. The app opens on one persistent landing channel with no purpose statement and no drift nudge, which answers in place and may then offer to switch to a matching channel; on accept, the messages that prompted the offer are copied into the target as a visible quoted block that the target's context also sees. No offer for one-offs. The note settles: how a topic is matched against purpose statements and how sure a match must be; when the offer appears and how often (a waved-off match is not offered again for that topic); which messages count as the ones that prompted it; how the quote is stored and shown; how much recent history the landing channel keeps in context; whether the landing channel offers a new channel when nothing matches; and how the user's view of what is related overrides the model's, both ways. With eval scenarios. _needs P3.1_
 
-- [ ] **P3.9** **Design note:** reference documents shared across channels (a cast of characters, contacts, topic notes) as living, versioned artifacts. The note settles: how they are stored next to goal state documents and artifacts; when a run looks one up (the user names a person or topic, or the purpose card does, and the user's message calls for it) and how a large one is read in part rather than whole; how the agent offers "Save this to People?" and how often; each document's home (starts where it was made, moves with the conversation when it is carried to another channel) and its origin, kept as a note; which writes need the user's confirmation (proposed: any change made from a channel other than its home, since origin stops counting once home moves); and the injection cases (a fetched page or a compromised model trying to plant or rewrite an entry). With eval scenarios. _needs P3.1, P2.4_
+- [ ] **P3.9** **Design note:** reference documents shared across channels (a cast of characters, contacts, topic notes) as living, versioned artifacts. The note settles: how they are stored next to goal state documents and artifacts; when a run looks one up (the user names a person or topic, or the purpose statement does, and the user's message calls for it) and how a large one is read in part rather than whole; how the agent offers "Save this to People?" and how often; each document's home (starts where it was made, moves with the conversation when it is carried to another channel) and its origin, kept as a note; which writes need the user's confirmation (proposed: any change made from a channel other than its home, since origin stops counting once home moves); and the injection cases (a fetched page or a compromised model trying to plant or rewrite an entry). With eval scenarios. _needs P3.1, P2.4_
 
 - [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5, P3.7, P3.11_
 
@@ -149,7 +149,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 ## Phase 7 — suggestions
 
-- [ ] **P7.1** The suggestion run: reads goals, purpose cards and recent activity, proposes a few cards, at most daily, off switch in settings. _needs P4.2, P4.3, P3.3_
+- [ ] **P7.1** The suggestion run: reads goals, purpose statements and recent activity, proposes a few cards, at most daily, off switch in settings. _needs P4.2, P4.3, P3.3_
 
 - [ ] **P7.2** Accept and dismiss: accept becomes a run, goal, schedule or credential request; dismissed cards are remembered. _needs P7.1, P4.5, P6.5_
 
