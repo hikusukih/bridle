@@ -101,7 +101,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P4.3** Goals, server side: create, edit and archive a goal, and the goal's channel with its brief pinned. _needs P4.1, P1.2_
 
-- [ ] **P4.3a** The Goals screen: list each goal with its next scheduled run, and the form to create and edit one. _needs P4.3, P4.2, P1.1_
+- [ ] **P4.3a** The Goals screen: a grid of tiles about 200 by 200 pixels, one per goal, each with an icon the client draws from the goal's title (initials or stylized text on a color derived from the title, so it is deterministic and needs no image), the title, a line of the brief and the next scheduled run, and each opening the goal page (P4.17); and the form to create and edit one. _needs P4.3, P4.2, P1.1_
+
+- [ ] **P4.17** The goal page: opening a goal from the grid shows its brief, its state document, its schedules with the next run, its own channel and its linked channels (with link and unlink), and its recent reports once reports exist, with the actions to edit, archive and delete. _needs P4.3a, P4.4, P4.14_
 
 - [ ] **P4.4** The state document: `update_goal_state` with versions, shown as an artifact, readable and editable by the user, with history. _needs P4.3, P2.4_
 
