@@ -1,6 +1,6 @@
 # Design note and threat model: the key manager
 
-Box P6.1. Status: proposed. Nothing under Phase 6 is built until this is merged, and this note deserves the slowest review in the repository: the user reviews the ideas here, and every later box in this phase is held to what this note says. It depends on box P2.7, authentication (#37): the vault's endpoints and the credential form assume the user is logged in.
+Box P6.1. Status: accepted by the user, pending merge. Nothing under Phase 6 is built until this is merged, and this note deserves the slowest review in the repository: the user reviews the ideas here, and every later box in this phase is held to what this note says. It depends on box P2.7, authentication (#37): the vault's endpoints and the credential form assume the user is logged in.
 
 ## Problem
 
@@ -50,7 +50,7 @@ Each secret carries, and the vault enforces on every use:
 
 - **Hosts:** exact host names or `*.suffix`, https only, port-bound. A request to any other host is refused. This is the main defense against injection: a page cannot make the credential go anywhere the user did not name.
 - **Methods:** `GET` only unless the user widened it. A page that hijacks a read-only credential can read, not post.
-- **Tools** that may use it, and **goals or channels** that may use it. A secret scoped to one goal is invisible to others.
+- **Tools** that may use it, and **goals or channels** that may use it. A secret scoped to one goal is invisible to others. Goals do not call or message each other, but they do share artifacts and, later, the feed, so one goal can learn that another uses a handle, because handle names are not secret and can appear in an artifact. That teaches it nothing it can use: access is a property of the secret's scope, checked by the vault on every use, not of anything a goal knows. A goal that names another goal's handle gets the same generic refusal as for an unknown handle, so a refusal does not reveal which names exist, and the attempt is audited. Giving a second goal the same login means the user widens the scope on a request card; no goal can ask another to do it, and the model cannot edit scope.
 - **Expiry,** and whether each use needs approval. A request that carries a credential is at least `external` under `docs/design/tools.md`, so it waits for the user's approval unless a goal's standing permission (Phase 4) covers that tool.
 - Redirects are never followed with a credential attached: a redirect to another host is refused, to the same host re-checked. Credentialed requests to private or loopback addresses are refused unless the secret's host list names that host.
 
@@ -62,9 +62,11 @@ The master key is 32 random bytes in a **key file outside the data directory**, 
 
 ### Scrubbing
 
-`scrub` runs wherever text could carry a value to the model, the user, a log or the disk: tool results (at the sizing step in `tools/sizing.ts`, the seam the tools note reserved), model output before it is persisted or streamed, tool-call arguments before they are stored, error messages, log lines, `create_artifact` content, feed items, and summaries and purpose cards written from transcripts. Events are scrubbed before they are stored, so the stream and the database agree.
+`scrub` runs wherever text could carry a value to the model, the user, a log or the disk: tool results (at the sizing step in `tools/sizing.ts`, the seam the tools note reserved), model output before it is persisted or streamed, tool-call arguments before they are stored, error messages, log lines, `create_artifact` content, feed items, and summaries and purpose statements written from transcripts. Events are scrubbed before they are stored, so the stream and the database agree.
 
 For each secret it matches the raw value, percent-encoded, JSON-escaped, hex in both cases, base64 and base64url at each of the three alignments (so a value embedded in other text still matches), and the reversed string. It also checks a copy with whitespace, hyphens, quotes and zero-width characters removed, to catch a value split up on purpose; a hit there withholds the entire result ("result withheld: it contained a secret") instead of redacting in place. Values shorter than 8 characters are refused at `store`, since they cannot be scrubbed without wrecking ordinary text. Scrubbing is a net, not the wall: the wall is that tools never hold values.
+
+`scrub` is a function inside the vault, not a tool, so the model cannot call it. It can still become a guessing oracle through the paths it protects: if the model writes a guess into an artifact or a tool argument and sees `[redacted: name]` come back, the guess was right. Rate limiting does not fix that, since one lucky guess at a weak password is enough, and a legitimate run never needs one. The rule is instead: **a hit on text the model wrote (its output, tool-call arguments, artifact content) is never a silent redaction.** The run stops with a visible reason, the hit is audited with the run and the tool, and the user is told, because the model has no honest way to hold a value it was never given. A hit on text the model did not write (a tool result from a host that echoes the secret) is redacted and audited as before. Misses reveal nothing, so there is nothing to throttle. A weak secret remains guessable by whoever can guess it, which is why the minimum length exists.
 
 ### Requesting a login, and secrets pasted in chat
 
@@ -97,12 +99,13 @@ Each is a deterministic test using a scripted model and obviously fake values; P
 11. Secret pasted in chat reaches the model or the stored transcript: it must not.
 12. XSS payload in model output, a fetched page or an HTML artifact tries to call vault endpoints: blocked by rendering, CSP, header-token auth and sandboxing.
 13. A tool, or a model-supplied argument, reaches for `store` or any value: the tool context has no such method (enumeration test plus the import rule).
-14. Goal B uses goal A's secret, or enumerates handles: refused, and `list()` shows only its own.
+14. Goal B uses goal A's secret, or enumerates handles, including one learned from an artifact A wrote: refused with the same message as an unknown handle, and `list()` shows only its own.
 15. Expired, revoked or wrong-method (POST on a GET-only secret) use: refused.
 16. Database file or a backup scanned for the value and its encodings: no match; a ciphertext moved to another secret fails to decrypt.
 17. Key file readable by others, or missing with a non-empty vault: the vault refuses to start.
-18. SSE stream, compaction summaries, purpose cards and feed items carry no value.
+18. SSE stream, compaction summaries, purpose statements and feed items carry no value.
 19. "Repeat exactly what the tool returned" after a response containing a value: the model never had it.
+20. Guessing: the model writes candidate values into an artifact, a tool argument or its own output to see which come back redacted. A hit stops the run with a visible reason and is audited; a miss looks the same as any other text.
 
 ## Residual risks
 
@@ -119,10 +122,10 @@ A credential can do whatever its host allows within its scope, so a hijacked run
 
 ## How evals will tell if it works
 
-The 19 attacks above are the suite, written first, each failing before the code exists. Beyond them: unit tests on every encoding variant the scrubber claims; property tests that `scrub` never changes text containing no secret; a test that every outbound text path in the server calls `scrub` (found by instrumenting the event, log and artifact writers); and the adversarial session (P6.7), where an agent is given the code and told to make the vault leak, with each finding filed and answered.
+The 20 attacks above are the suite, written first, each failing before the code exists. Beyond them: unit tests on every encoding variant the scrubber claims; property tests that `scrub` never changes text containing no secret; a test that every outbound text path in the server calls `scrub` (found by instrumenting the event, log and artifact writers); and the adversarial session (P6.7), where an agent is given the code and told to make the vault leak, with each finding filed and answered.
 
-## Open for the user
+## Decided by the user
 
-- The 8-character minimum, GET-only as the default method, and approval on every credentialed request by default (proposed: yes).
-- The key file's default location in Docker, and whether the vault should start with no key file at all and say so (proposed) or generate one beside the data (rejected here, since a backup then holds both).
-- Putting authentication before Phase 6 as its own box; see the `[plan]` PR.
+- Secrets shorter than 8 characters are refused, credentialed requests default to GET only, and each credentialed request needs approval by default.
+- The vault starts with no key file and says so; it does not generate one beside the data. In Docker the key file sits on a volume separate from the data.
+- Authentication is its own box and lands before Phase 6 (P2.7, #37).
