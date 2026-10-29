@@ -5,6 +5,7 @@ import { events } from "../src/server/db/schema.js";
 import type { ModelAdapter } from "../src/server/model/adapter.js";
 import { type ScriptedFixture, ScriptedModel } from "../src/server/model/scripted.js";
 import { defaultLimits, RunEngine, type RunLimits } from "../src/server/runs.js";
+import { type EffectLevel, ToolRegistry } from "../src/server/tools/registry.js";
 
 // One scenario is one channel and a list of user messages, each sent as its own run. The expectations are
 // per run, in order. `script` feeds the scripted model in CI; against a real model it is ignored, so
@@ -16,7 +17,16 @@ export type RunExpectation = {
   replyIncludes?: string[];
   /** Exact event types in order. Scripted mode only. */
   eventTypes?: string[];
+  /** Answers to approval requests, in the order the cards appear. */
+  approvals?: ("approve" | "decline")[];
+  /** Every string must appear in some tool result stored on the run. */
+  toolResultIncludes?: string[];
+  /** Whether the first tool result was cut for the model. */
+  toolResultTruncated?: boolean;
 };
+
+/** A stand-in tool whose result is fixed, so scenarios can exercise effect levels and result sizing. */
+export type FakeTool = { name: string; effect: EffectLevel; result: string; repeat?: number };
 
 export type Scenario = {
   name: string;
@@ -24,6 +34,7 @@ export type Scenario = {
   messages: string[];
   script: ScriptedFixture;
   limits?: Partial<RunLimits>;
+  tools?: FakeTool[];
   expect: RunExpectation[];
 };
 
@@ -31,10 +42,22 @@ export type ScenarioResult = { name: string; failures: string[] };
 
 export async function runScenario(scenario: Scenario, live?: ModelAdapter): Promise<ScenarioResult> {
   const db = openDatabase(":memory:");
-  const engine = new RunEngine(db, live ?? new ScriptedModel(scenario.script), {
-    ...defaultLimits,
-    ...scenario.limits,
-  });
+  const tools = new ToolRegistry();
+  for (const t of scenario.tools ?? []) {
+    tools.register({
+      name: t.name,
+      description: t.name,
+      effect: t.effect,
+      parameters: { type: "object", properties: {} },
+      execute: async () => t.result.repeat(t.repeat ?? 1),
+    });
+  }
+  const engine = new RunEngine(
+    db,
+    live ?? new ScriptedModel(scenario.script),
+    { ...defaultLimits, ...scenario.limits },
+    tools,
+  );
   const channel = createChannel(db, scenario.name);
   const failures: string[] = [];
 
@@ -47,7 +70,35 @@ export async function runScenario(scenario: Scenario, live?: ModelAdapter): Prom
     if (!want) continue;
     const label = `run ${i + 1}`;
     const run = engine.start(channel.id, text);
-    await engine.whenSettled(run.id);
+    // Answer approval cards as they appear; the run is parked in "waiting" until each one is answered.
+    const answers = [...(want.approvals ?? [])];
+    let settled = false;
+    void engine.whenSettled(run.id).then(() => {
+      settled = true;
+    });
+    while (!settled) {
+      const open = db
+        .select()
+        .from(events)
+        .where(eq(events.runId, run.id))
+        .orderBy(events.seq)
+        .all()
+        .filter((e) => e.type === "approval_request" || e.type === "approval_decision");
+      const asked = open.filter((e) => e.type === "approval_request").map((e) => String(JSON.parse(e.data).callId));
+      const decided = new Set(
+        open.filter((e) => e.type === "approval_decision").map((e) => String(JSON.parse(e.data).callId)),
+      );
+      const next = asked.find((id) => !decided.has(id));
+      const answer = answers[0];
+      if (next && answer) {
+        answers.shift();
+        engine.decide(run.id, next, answer);
+      } else if (next && engine.get(run.id).status === "waiting") {
+        failures.push(`${label}: waited on approval ${next} and no answer was scripted`);
+        engine.cancel(run.id);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2));
+    }
     const done = engine.get(run.id);
     const stored = db.select().from(events).where(eq(events.runId, run.id)).orderBy(events.seq).all();
 
@@ -61,6 +112,18 @@ export async function runScenario(scenario: Scenario, live?: ModelAdapter): Prom
       .join("");
     for (const needle of want.replyIncludes ?? []) {
       if (!reply.includes(needle)) failures.push(`${label}: reply lacks "${needle}"`);
+    }
+    const results = stored
+      .filter((e) => e.type === "tool_result")
+      .map((e) => JSON.parse(e.data) as { result: string; truncated?: boolean });
+    for (const needle of want.toolResultIncludes ?? []) {
+      if (!results.some((r) => r.result.includes(needle)))
+        failures.push(`${label}: no tool result includes "${needle}"`);
+    }
+    if (want.toolResultTruncated !== undefined && results[0]?.truncated !== want.toolResultTruncated) {
+      failures.push(
+        `${label}: first tool result truncated was ${results[0]?.truncated}, expected ${want.toolResultTruncated}`,
+      );
     }
     if (!live && want.eventTypes) {
       const types = stored.map((e) => e.type);

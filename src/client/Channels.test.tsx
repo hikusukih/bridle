@@ -11,6 +11,7 @@ const channel = (id: string, name: string, archivedAt: string | null = null): Ch
   createdAt: stamp,
   updatedAt: stamp,
   archivedAt,
+  model: null,
 });
 
 // Stands in for the browser's EventSource; a test pushes events through the most recent instance.
@@ -192,6 +193,97 @@ describe("channel view", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("The model could not be reached.");
     expect(screen.getByText("hi")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
+  });
+
+  it("shows an approval card for an external tool and sends the decision", async () => {
+    window.location.hash = "#/channels/c1";
+    const calls = stubFetch({
+      "/api/channels": () => Response.json([channel("c1", "Plans")]),
+      "/api/channels/c1/runs": () =>
+        Response.json([
+          run("waiting", null, [
+            event(1, "message", { text: "mail it" }),
+            event(2, "approval_request", {
+              callId: "k1",
+              tool: "send_email",
+              reason: "Send an email to Sam",
+              arguments: { to: "sam@example.com" },
+            }),
+          ]),
+        ]),
+      "/api/runs/r1/approvals/k1": (_m, body) => {
+        expect(body).toEqual({ decision: "approve" });
+        return Response.json({});
+      },
+    });
+    render(<ChannelsScreen />);
+    expect(await screen.findByText("Send an email to Sam")).toBeTruthy();
+    expect(screen.getByText(/sam@example.com/)).toBeTruthy();
+    // A waiting run keeps the channel busy, so the message box offers Cancel rather than Send.
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    await waitFor(() => expect(calls).toContain("POST /api/runs/r1/approvals/k1"));
+  });
+
+  it("shows a settled approval as answered, without buttons", async () => {
+    window.location.hash = "#/channels/c1";
+    stubFetch({
+      "/api/channels": () => Response.json([channel("c1", "Plans")]),
+      "/api/channels/c1/runs": () =>
+        Response.json([
+          run("done", null, [
+            event(1, "approval_request", { callId: "k1", tool: "send_email", reason: "Send it", arguments: {} }),
+            event(2, "approval_decision", { callId: "k1", decision: "decline" }),
+          ]),
+        ]),
+    });
+    render(<ChannelsScreen />);
+    expect(await screen.findByText("Declined.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+  });
+
+  it("shows which model the channel uses and lets the user set one", async () => {
+    window.location.hash = "#/channels/c1";
+    const calls = stubFetch({
+      "/api/models": () => Response.json({ default: "openai:gpt-test" }),
+      "/api/channels": () => Response.json([channel("c1", "Plans")]),
+      "/api/channels/c1/runs": () => Response.json([]),
+      "/api/channels/c1/model": (_m, body) =>
+        Response.json({ ...channel("c1", "Plans"), model: (body as { model: string | null }).model }),
+    });
+    render(<ChannelsScreen />);
+    expect(await screen.findByText("Model: openai:gpt-test (default)")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Model for this channel"), { target: { value: "anthropic:claude-test" } });
+    fireEvent.click(screen.getByRole("button", { name: "Set model" }));
+    expect(await screen.findByText("Model: anthropic:claude-test")).toBeTruthy();
+    expect(calls).toContain("POST /api/channels/c1/model");
+  });
+
+  it("rebuilds each channel's own history and failure after a reload", async () => {
+    stubFetch({
+      "/api/channels": () => Response.json([channel("c1", "Plans"), channel("c2", "Cooking")]),
+      "/api/channels/c1/runs": () => Response.json([run("done", null, [event(1, "message", { text: "Plan it." })])]),
+      "/api/channels/c2/runs": () =>
+        Response.json([
+          run("failed", "model unreachable", [
+            event(1, "message", { text: "Soup?" }),
+            event(2, "error", { message: "The model could not be reached." }),
+          ]),
+        ]),
+    });
+    for (const [hash, shown, hidden] of [
+      ["#/channels/c2", "Soup?", "Plan it."],
+      ["#/channels/c1", "Plan it.", "Soup?"],
+      ["#/channels/c2", "Soup?", "Plan it."],
+    ] as const) {
+      window.location.hash = hash;
+      const { unmount } = render(<ChannelsScreen />);
+      expect(await screen.findByText(shown)).toBeTruthy();
+      expect(screen.queryByText(hidden)).toBeNull();
+      expect(screen.queryAllByRole("alert").length).toBe(hash === "#/channels/c2" ? 1 : 0);
+      unmount();
+    }
   });
 
   it("is read-only when the channel is archived", async () => {

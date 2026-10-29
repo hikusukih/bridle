@@ -7,7 +7,7 @@ export type Channel = typeof channels.$inferSelect;
 
 export class ChannelError extends Error {
   constructor(
-    readonly code: "not_found" | "archived" | "invalid_name",
+    readonly code: "not_found" | "archived" | "invalid_name" | "invalid_model",
     message: string,
   ) {
     super(message);
@@ -35,9 +35,44 @@ export function getChannel(db: Db, id: string): Channel {
 
 export function createChannel(db: Db, name: unknown, now = new Date()): Channel {
   const stamp = now.toISOString();
-  const row = { id: randomUUID(), name: cleanName(name), createdAt: stamp, updatedAt: stamp, archivedAt: null };
+  const row = {
+    id: randomUUID(),
+    name: cleanName(name),
+    createdAt: stamp,
+    updatedAt: stamp,
+    archivedAt: null,
+    model: null,
+  };
   db.insert(channels).values(row).run();
   return row;
+}
+
+/**
+ * Sets the channel's model spec, or clears it with null to follow the default. `validate` is the model
+ * registry's check, so a typo or a missing key is refused here rather than on the first message.
+ */
+export function setChannelModel(
+  db: Db,
+  id: string,
+  model: unknown,
+  validate: (spec: string) => void,
+  now = new Date(),
+): Channel {
+  const channel = getChannel(db, id);
+  if (channel.archivedAt) throw new ChannelError("archived", "Restore the channel before changing it.");
+  let spec: string | null = null;
+  if (model !== null && model !== undefined) {
+    spec = typeof model === "string" ? model.trim() : "";
+    if (!spec) throw new ChannelError("invalid_model", "A model is written provider:name, such as openai:gpt-4o.");
+    try {
+      validate(spec);
+    } catch (err) {
+      throw new ChannelError("invalid_model", (err as Error).message);
+    }
+  }
+  const updated = { model: spec, updatedAt: now.toISOString() };
+  db.update(channels).set(updated).where(eq(channels.id, id)).run();
+  return { ...channel, ...updated };
 }
 
 export function renameChannel(db: Db, id: string, name: unknown, now = new Date()): Channel {
