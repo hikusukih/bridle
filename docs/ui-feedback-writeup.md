@@ -1,15 +1,15 @@
 # UI feedback, October 29: write-up and deviations from the design
 
-Status: draft for the user, not committed. Nothing here has been filed as a `[plan]` PR yet; the last section proposes how to split it. Terms in bold at their first use (**run**, **scope**, **scope statement**, **housekeeping call**, **request**, **card**) are defined in the glossary in `docs/architecture.md`.
+Status: revised after the user's answers (Home channel, one store for reports, linked-channel writes, goals keep their own channel and can also link to others, initials icons, calm as an architecture guide). Nothing here has been filed as a `[plan]` PR yet; the last section proposes how to split it. Terms in bold at their first use (**run**, **scope**, **scope statement**, **housekeeping call**, **request**, **card**) are defined in the glossary in `docs/architecture.md`.
 
 Each item says what was asked, what the current design already says, and whether it fits, extends or deviates. A **Deviation** is a place where today's docs would say something different once the item is adopted, so the docs have to change first.
 
 ## Open PRs this touches
 
 - [hikusukih/brindle#63](https://github.com/hikusukih/brindle/pull/63) is P3.8, the landing channel design note, open and not merged. Everything below about the landing channel can still be edited into that note rather than amended later.
-- [hikusukih/brindle#64](https://github.com/hikusukih/brindle/pull/64) is P4.3, goals server side, built on the merged goals note, so it gives each goal exactly one channel. Item 6 (goals separate from channels) changes that. If #64 merges first, a follow-up box has to migrate it.
+- [hikusukih/brindle#64](https://github.com/hikusukih/brindle/pull/64) is P4.3, goals server side, built on the merged goals note, so it gives each goal its own channel. That stays true under item 6: links to other channels are added beside it, so #64 needs no migration, only a later additive box. The user will review #64 before any of the work here merges.
 - [hikusukih/brindle#61](https://github.com/hikusukih/brindle/pull/61) is P3.2, context assembly. The new context layers in items 2, 3 and 7 land on top of it.
-- [hikusukih/brindle#62](https://github.com/hikusukih/brindle/pull/62), [#65](https://github.com/hikusukih/brindle/pull/65) and [#66](https://github.com/hikusukih/brindle/pull/66) (scheduler, goal lifecycle, scheduler wiring) say a schedule's destination is "the goal's channel". Item 6 changes the destination to a chosen channel.
+- [hikusukih/brindle#62](https://github.com/hikusukih/brindle/pull/62), [#65](https://github.com/hikusukih/brindle/pull/65) and [#66](https://github.com/hikusukih/brindle/pull/66) (scheduler, goal lifecycle, scheduler wiring) say a schedule's destination is "the goal's channel". Item 6 keeps that as the default and lets a schedule name any linked channel.
 - [hikusukih/brindle#52](https://github.com/hikusukih/brindle/pull/52) is P2.11, per-model settings as a JSON file. Item 1 puts a screen over it.
 
 ## 1. A Settings screen
@@ -43,7 +43,7 @@ Asked: a SOUL.md-style personality, user-editable, with presets, token-capped, p
 - **The puzzle framing:** my honest view is that a visible budget meter already is the game: a bar that fills as you write, and a compact button when it is over. A separate game mechanic risks being a gimmick that gets in the way of editing; I would ship the meter and see whether you want more.
 - **Who may write it:** the user only. The agent never edits the Soul by itself, even with a confirmation, in the first version: it is the one text every run reads first, and the reference-documents rule (text from the web must not quietly rewrite what every channel reads) applies in full. An agent suggestion could arrive later as a card.
 - **What it cannot do:** change tool permissions, approvals, effect levels or the key manager. It shapes voice and defaults, nothing structural. The harness instructions come first and say so.
-- **Deviation: the calm principle.** `docs/architecture.md` states calm as "Guiding principle" in the voice of a rule. You said it is a design goal of the app as a whole and can be overridden by the user. Proposed wording: calm is the default, not a constraint; a user can turn on notifications, suggestions, follow-up offers and a chattier voice (through the Soul or Settings), and nothing in the harness refuses that. Acceptance box A.4 ("no notification the user didn't ask for") stays true, since it is about what is on by default. This is a small edit to `architecture.md`, its own `[plan]` PR.
+- **Deviation: the calm principle.** `docs/architecture.md` states calm as "Guiding principle" in the voice of a rule. Decided: it guides the architecture and the defaults but does not restrict the experience the user wants. Proposed wording: calm is the default, not a constraint; a user can turn on notifications, suggestions, follow-up offers and a chattier voice (through the Soul or Settings), and nothing in the harness refuses that. Acceptance box A.4 ("no notification the user didn't ask for") stays true, since it is about what is on by default. This is a small edit to `architecture.md`, its own `[plan]` PR.
 
 ## 4. The left menu
 
@@ -62,42 +62,32 @@ Asked: an "Add goal" flow like Muse's: suggested goals as buttons ("lose 5 lbs",
 - **Today:** the architecture says category buttons on the Goals screen are prompt templates that draft a goal for the user to edit (P4.6). P4.9 adds `propose_goal`, a tool that drafts a goal as a card the user confirms; the model never creates one itself. P4.3a is the Goals screen as a list with each goal's next run, and the form to create and edit.
 - **Fits and extends:** your buttons are P4.6 with specific examples, and the text box is the same draft-and-confirm path. Nothing is created without the user's confirmation, which matches the architecture.
 - **A gap in P4.9:** `propose_goal` is a tool, and a tool call happens inside a run, which needs a channel or goal scope. A text box on the Goals page has no scope. Recommended: drafting from the Goals page is a **housekeeping call** that returns a draft (title, brief, optionally a schedule) into the edit form, with no tools and no scope. `propose_goal` stays for drafting from inside a conversation. **Deviation:** a second path for drafting a goal, and the glossary's list of housekeeping calls gains "drafting a goal".
-- **Grid and image (deviation from P4.3a):** a grid of tiles replaces the list. The image is the new part and the architecture has no image generation. Options, in the order I would build them:
-  - A generated placeholder from the title (a color and an emoji or pattern), always present, free, deterministic. I would ship this first.
-  - An image the user supplies, stored as an artifact of kind image, so it shows in the gallery and survives the goal.
-  - Later, a `generate_image` tool using an OpenAI-compatible images endpoint, the same way speech works, so a local server and a hosted one are interchangeable. It costs money or hardware per goal, and your local-first setup may not have an image model, which is why it comes last and stays optional.
+- **Grid and icon (deviation from P4.3a):** a grid of roughly 200 by 200 pixel tiles replaces the list. Decided: the tile's icon is made from the goal's title, its initials or a stylized text rendering, drawn by the client on a color derived from the title, so it is deterministic and costs nothing. No image generation and no image storage in the first version. A user-supplied image (an artifact of kind image) or a `generate_image` tool can come later if wanted, behind the same tile.
 - **The goal page** (the "primary goal experience") is new: P4.3a does not describe one. It shows the brief, the state document, the schedules and next run, the linked channels (item 6), recent reports (item 8) and the goal's Add or Edit actions. This is a box of its own, needing P4.3a and P4.4.
 - Open: whether the suggested buttons are fixed text or a mix of fixed and ones the suggestion run (P7.1) proposes. I would start fixed.
 
-## 6. Goals are separate from channels, many to many
+## 6. Goals keep their own channel and can link to others
 
-Asked: goals have primacy of their own and are not stuck in a channel. A goal may create a channel if none fits, since it needs somewhere to respond. Several goals can relate to a channel and a goal to several channels. For example three channels (Scheduling, My Band, The Kids) and goals A (Prepare for the Show) and B (Broaden Kids Culture): talk about A and B in Scheduling, A in My Band, B in The Kids. Channels are where goals get refined and defined, with room for serendipity. Goal runs posting to a channel stays correct.
+Asked: a goal should not be stuck in one channel. Several goals can relate to a channel and a goal to several channels. For example three channels (Scheduling, My Band, The Kids) and goals A (Prepare for the Show) and B (Broaden Kids Culture): talk about A and B in Scheduling, A in My Band, B in The Kids. Channels are where goals get refined and defined, with room for serendipity. Goal runs posting to a channel stays correct. Decided after review: a goal still gets its own channel, and may also link to other channels.
 
-This is the largest deviation.
+This is a smaller change than first proposed: it adds to the goals note and leaves the existing 1:1 channel alone.
 
-- **Today (`docs/design/goals.md`):**
-  - `goals` holds the id of its channel, "created with the goal", and the brief is pinned at its top.
-  - The brief is that channel's scope statement; no purpose statement is drafted for it.
-  - A schedule's destination is `channel`, meaning the goal's channel.
-  - "At most 1 run per goal at once", counting the user's run in the goal's channel.
-  - Deleting a goal deletes its channel and that channel's runs.
-- **Proposed model:**
-  - A goal exists without a channel. A link table (goal id, channel id) holds the many-to-many relation.
-  - A goal run's scope is the goal. Its output posts to a destination channel chosen per schedule when the schedule is confirmed, defaulting to the first linked channel. If the goal has no channel, one is created, named after the goal, and linked, so output always has a home.
-  - A channel run gets the briefs of its linked goals in context, as one line each under a small cap, plus read access to their state documents, and can write them (below). So talking about A and B in Scheduling works with no handoff.
-  - `propose_goal` from a conversation (P4.9) creates the goal already linked to that channel.
-  - Serendipity: Home's directory (item 7) lists goals, so a mention in any channel can surface a goal, and the agent can offer "Link this goal to this channel?" as an inline offer with the same click-to-accept pattern as the landing offers.
-  - A channel that a goal created is an ordinary channel: it gets a purpose statement drafted like any other. The `GoalBrief` remains the scope statement for goal runs only.
-- **What changes in the goals note:** the `goals` row loses the channel id; `goal_channels` is added; `schedules.destination` becomes a channel id (plus the later `feed` and `digest` values); the concurrency rule applies to goal-scope runs, not to the user's channel runs; deleting a goal unlinks its channels and deletes none of them; the deletion dialog then asks what to do with the goal's own runs and artifacts, as it already does for artifacts.
-- **Concurrency under many to many:** the existing state-document edit rules already handle two writers (edits are `{old, new}` pairs against a version, conflicts return the current content, a user's edit is never overwritten), so a channel run can write goal state without a per-goal run lock. The one-run-per-goal rule stays for scheduled goal runs.
-- **Open: should a channel run write a linked goal's state without a confirmation?** My recommendation: yes in a channel the goal is linked to, because versions are append-only and each one records the channel and run that wrote it, with one-click revert. A channel not linked to the goal asks first. The risk is the same one the reference-documents rule guards against: a channel that read a poisoned page writing something the goal's later scheduled runs act on. Provenance and revert limit it; they do not remove it, so say if you would rather it always confirm.
-- **Cost:** it touches the goals note, P4.2, P4.3 (#64, in flight), P4.11, P4.12, P4.3a and P4.9. Because #64 implements the merged note as written, I recommend letting it land and adding a migration box after the amended note merges. If you would rather hold #64 until the note is amended, that is your call; it avoids a migration but delays Phase 4.
+- **Today (`docs/design/goals.md`):** `goals` holds the id of its own channel, created with the goal, with the brief pinned at its top and serving as that channel's scope statement. A schedule's destination is that channel. At most one run per goal at once, counting the user's run in the goal's channel. Deleting a goal deletes its channel and that channel's runs.
+- **Proposed model (additive):**
+  - The goal's own channel is unchanged. A new link table (goal id, channel id) holds any further channels. The goal's own channel counts as linked.
+  - **The link mechanism.** A link is what grants a channel run the right to read and write a goal's state, so it is only ever made by a user action, never by the model alone. Four ways to make one, each a click: the goal page ("Link a channel" with a picker); a channel's header ("Link a goal"); the inline offer "Link this goal to this channel?" that the agent may show when a conversation keeps coming back to a goal (an offer card, as with the landing offers; nothing links until accepted); and `propose_goal` from a conversation (P4.9), whose confirmed goal is linked to that channel automatically. Unlinking is one click from either side and ends the access at once.
+  - A schedule's destination is the goal's own channel by default, or any linked channel, chosen when the schedule is confirmed.
+  - A channel run gets the one-line briefs of its linked goals in context, under a small cap, plus read access to their state documents and, per the answer below, write access. So talking about A and B in Scheduling works with no handoff.
+  - A goal run's scope is still the goal; the `GoalBrief` remains the scope statement for goal runs and for the goal's own channel.
+- **Writes from a linked channel need no confirmation (decided).** The state document is append-only and versioned, each version records the channel and run that wrote it, and revert is one click. A channel that is not linked cannot write at all (it can offer to link, which is a click). The remaining risk is a channel that read a poisoned page writing something a later scheduled goal run acts on; provenance and revert limit it and do not remove it, so the red-team and injection scenarios gain a case for a linked-channel write.
+- **What changes in the goals note:** a `goal_channels` table; `schedules.destination` may name a linked channel; the concurrency rule applies to goal-scope runs, and the state-document edit rules (edits against a version, conflicts return the current content) cover concurrent writers, so a channel run needs no per-goal lock; deleting a goal asks what to do with its own channel (keep it as an ordinary channel with a purpose statement drafted, or delete it as today) and only unlinks the others.
+- **Cost:** additive over P4.3 ([#64](https://github.com/hikusukih/brindle/pull/64)), P4.2, P4.11 and P4.12, so none of them is invalidated. It adds a design-note amendment, then a box for the link table and the link actions, and touches P4.3a and P4.9.
 
 ## 7. One Brindle with facets, and Home
 
 Asked: the catchall should correspond with a sense of the whole system. Other channels should feel like added context rather than silos. Siloing for security is acceptable, and the off-topic nudge is welcome. A landing channel that cannot see the instance is much less usable. It should not have a summary, but should know the names of all active channels and goals. Perhaps a tool call "to the landing channel" loads system-level knowledge when a message seems out of scope for the current channel, with "this seems off topic" as the gate.
 
-- **Naming (a better term for the catchall).** The glossary and notes say "landing channel". I propose **Home** as the label in the UI and the docs. One collision: the architecture already says a reference document's "home" is the channel that owns it. I would rename that one to "owning channel", which is a docs-only edit. If you prefer another word (Hub, Main), it is a find-and-replace; only the glossary entry matters.
+- **Naming (a better term for the catchall).** The glossary and notes say "landing channel". Decided: **Home channel** in the UI and the docs, **Home** for short. One collision: the architecture already says a reference document's "home" is the channel that owns it. That one becomes "owning channel", a docs-only edit.
 - **Home sees the instance. Deviation in the landing note (#63).** The note has the matching housekeeping call see only candidates' names and purpose statements, and says the model "never sees another channel's history". Your point stands: a front door that does not know what is behind it is not much use. Proposed change:
   - The matching call stays as narrow as the note says; that is a different call from a run.
   - A Home run gets a directory layer: every active channel (name and purpose statement) and every active goal (title and one-line brief), one line each, most recently active first, under a token cap; beyond the cap a read tool lists the rest. No summary for Home, as the note already says.
@@ -118,7 +108,7 @@ Asked: agent-written text reports about background activity appear in the releva
 - **Two kinds of report, same store:**
   - Goal-run reports are agent-written text: the run's output summary, posted in its destination channel as it is today and listed in that channel's reports pane and on each linked goal's page. Stored once; other linked channels list it by reference rather than copying it.
   - System events are written by the harness from templates, with no model call, so the wording is exact and cannot be misled by what a run read: a scheduled run failed or was missed, a run stopped on a limit, an update is available, a model in use was removed from configuration. They go to Home's pane. Events belonging to one channel or goal also show there.
-- **A question for you about the pane and the feed.** The feed (items found), the digest (a periodic roll-up) and a reports pane (what Brindle did and what went wrong) overlap in their data model. I would keep one store with a kind field, and give Home's pane a view onto it (reports and system events), so the feed is the same store filtered to found items. Three separate lists would drift apart. Say if you want them kept separate.
+- **One store (decided).** The feed (items found), the digest (a periodic roll-up) and the reports pane (what Brindle did and what went wrong) share one store with a kind field. Home's pane is a view onto reports and system events, and the feed is the same store filtered to found items. This touches P5.1 and P8.2, which are worded around separate lists.
 - **Errors that matter vs housekeeping noise:** the landing note says a failed housekeeping call produces no error. I would keep that, and show only errors that affect work the user can see: a failed or missed scheduled run, a run stopped on a limit, a credential problem. Failed housekeeping calls get a count under Settings, in a diagnostics line, not a report.
 - **Calm:** no notification attaches to reports by default; the existing per-goal and per-channel opt-in applies.
 
@@ -138,7 +128,8 @@ Not yet seen on a phone. The shell was built for it (bottom bar on narrow screen
 
 - `docs/architecture.md`: the calm principle becomes a default the user can override; the glossary renames the landing channel to Home and a reference document's "home" to "owning channel"; a reports surface is added; housekeeping calls gain "drafting a goal".
 - `docs/design/context.md`: layer 1 describes the app; layer 2 gains the place; a Soul layer after layer 1 with a cap; a directory layer for Home; `load_system_context`; the planned-break list gains Soul changes and directory changes.
-- `docs/design/goals.md`: goals no longer own a channel; many to many; destinations name a channel; the concurrency rule narrows to goal runs; deletion unlinks.
+- `docs/design/goals.md`: goals keep their own channel and gain links to other channels; destinations may name a linked channel; channel runs read and write linked goals' state; the concurrency rule narrows to goal runs; deleting a goal asks about its own channel and unlinks the rest.
+- Feed and digest (P5.1, P8.2): one store with a kind field shared with reports and system events.
 - P3.8 landing note (#63): Home sees the instance's directory and has cross-channel read tools; the open question about scheduled runs is answered (reports go in a pane); the quote event is generalized.
 - `.agents/PLAN.md`: new boxes for Settings, the Soul, the sidebar, Add goal and the grid, the goal page, the reports pane, the migration to many to many, and optionally the shim removal. Boxes P4.3a and P4.9 are reworded by proposal, not by their own PRs.
 
@@ -151,14 +142,16 @@ Each of these is one idea and can be merged or closed alone, per `CLAUDE.md`. ID
 - Soul box, needing the design note and Settings.
 - Sidebar nesting box, UI only.
 - Add goal and goals grid box, plus a separate goal page box.
-- Design note box: goals separate from channels, many to many, amending the goals note; later a migration box after P4.3 lands.
-- Design note box: reports and system events, plus the feed overlap question.
+- Design note box: goals can link to other channels, amending the goals note; then an implementation box for the link table and link actions, needing P4.3 and that note.
+- Design note box: reports and system events in one store with the feed and digest.
 - `docs/architecture.md` edits: the calm principle and the glossary terms.
 - Optional: remove the Bridle compatibility shim, after you confirm.
 
-## Questions that change what I do next
+## Decided
 
-- Is **Home** the right name, given the "owning channel" rename it forces?
-- Should reports, the feed and the digest share one store with different views?
-- May a channel run write a linked goal's state without confirmation, with provenance and revert?
-- Should #64 (goals with one channel each) land first and be migrated, or wait for the amended note?
+- The name is Home channel, and a reference document's old "home" becomes "owning channel".
+- Reports, the feed and the digest share one store with different views.
+- A channel run may write a linked goal's state without confirmation, in linked channels only, with provenance and revert; the link is a user action.
+- Goals keep their own channel and may also link to others, so #64 stands. The user reviews #64 before any of this merges.
+- The goals grid uses initials or stylized text as the icon; no images in the first version.
+- The calm principle guides the architecture and the defaults without limiting what the user wants.
