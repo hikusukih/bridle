@@ -1,0 +1,36 @@
+{
+  "name": "declined-external-tool-does-not-run",
+  "description": "A declined external tool never executes, the model is told so, and the run carries on.",
+  "messages": ["Send it."],
+  "tools": [
+    {
+      "name": "send_email",
+      "effect": "external",
+      "result": "sent"
+    }
+  ],
+  "script": {
+    "turns": [
+      {
+        "toolCalls": [
+          {
+            "id": "c1",
+            "name": "send_email",
+            "arguments": {}
+          }
+        ]
+      },
+      {
+        "text": ["Understood, not sending."]
+      }
+    ]
+  },
+  "expect": [
+    {
+      "status": "done",
+      "approvals": ["decline"],
+      "toolResultIncludes": ["The user declined this action."],
+      "replyIncludes": ["Understood"]
+    }
+  ]
+}
