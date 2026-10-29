@@ -14,7 +14,7 @@ import {
   restoreBrief,
   restoreGoal,
 } from "./goals.js";
-import { type CardWrite, currentCard, writeCard } from "./scope-cards.js";
+import { currentStatement, type StatementWrite, writeStatement } from "./scope-statements.js";
 
 const setup = () => openDatabase(":memory:");
 
@@ -74,16 +74,22 @@ describe("goals", () => {
     deleteGoal(db, goal.id);
     expect(listGoals(db)).toEqual([]);
     expect(listChannels(db)).toEqual([]);
-    expect(currentCard(db, "goal", goal.id)).toBeUndefined();
+    expect(currentStatement(db, "goal", goal.id)).toBeUndefined();
   });
 
   it("an agent's draft cannot save a goal brief", () => {
     const db = setup();
     // @ts-expect-error a goal brief takes only the user's confirmed text
-    const draft: CardWrite = { scopeKind: "goal", scopeId: "g", text: "t", author: "agent", confirmed: false };
+    const draft: StatementWrite = { scopeKind: "goal", scopeId: "g", text: "t", author: "agent", confirmed: false };
     void draft;
-    const card = writeCard(db, { scopeKind: "channel", scopeId: "c", text: "t", author: "agent", confirmed: false });
-    expect(card).toMatchObject({ kind: "purpose", confirmed: false });
+    const statement = writeStatement(db, {
+      scopeKind: "channel",
+      scopeId: "c",
+      text: "t",
+      author: "agent",
+      confirmed: false,
+    });
+    expect(statement).toMatchObject({ kind: "purpose", confirmed: false });
   });
 
   it("serves goals over the API", async () => {

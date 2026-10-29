@@ -8,7 +8,7 @@ CREATE TABLE `goals` (
 	FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `scope_cards` (
+CREATE TABLE `scope_statements` (
 	`id` text PRIMARY KEY NOT NULL,
 	`scope_kind` text NOT NULL,
 	`scope_id` text NOT NULL,
@@ -19,4 +19,4 @@ CREATE TABLE `scope_cards` (
 	`created_at` text NOT NULL
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `scope_cards_version_idx` ON `scope_cards` (`scope_kind`,`scope_id`,`version`);
+CREATE UNIQUE INDEX `scope_statements_version_idx` ON `scope_statements` (`scope_kind`,`scope_id`,`version`);

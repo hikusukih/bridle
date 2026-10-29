@@ -28,7 +28,7 @@ import {
   restoreGoal,
 } from "./goals.js";
 import { channelTranscript, type RunEngine, RunError, type RunEvent } from "./runs.js";
-import { ScopeCardError } from "./scope-cards.js";
+import { ScopeStatementError } from "./scope-statements.js";
 
 export type Greeting = {
   message: string;
@@ -62,7 +62,7 @@ export function createApp({ db, engine, models, clientRoot }: AppOptions) {
       const status = err.code === "not_found" ? 404 : err.code === "archived" ? 409 : 400;
       return c.json({ error: err.code, message: err.message }, status);
     }
-    if (err instanceof GoalError || err instanceof ScopeCardError) {
+    if (err instanceof GoalError || err instanceof ScopeStatementError) {
       const status = err.code === "not_found" ? 404 : err.code === "archived" ? 409 : 400;
       return c.json({ error: err.code, message: err.message }, status);
     }

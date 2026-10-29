@@ -53,7 +53,7 @@ export const events = sqliteTable(
   (t) => [uniqueIndex("events_run_seq_idx").on(t.runId, t.seq)],
 );
 
-// An ongoing project with its own channel. The brief lives in scope_cards; the state document arrives with P4.4.
+// An ongoing project with its own channel. The brief lives in scope_statements; the state document arrives with P4.4.
 export const goals = sqliteTable("goals", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
@@ -67,9 +67,9 @@ export const goals = sqliteTable("goals", {
   updatedAt: text("updated_at").notNull(),
 });
 
-// A channel's purpose card and a goal's brief share this table: append-only versions, the highest is current.
-export const scopeCards = sqliteTable(
-  "scope_cards",
+// A channel's purpose statement and a goal's brief share this table: append-only versions, the highest is current.
+export const scopeStatements = sqliteTable(
+  "scope_statements",
   {
     id: text("id").primaryKey(),
     // channel | goal
@@ -82,5 +82,5 @@ export const scopeCards = sqliteTable(
     confirmed: integer("confirmed", { mode: "boolean" }).notNull(),
     createdAt: text("created_at").notNull(),
   },
-  (t) => [uniqueIndex("scope_cards_version_idx").on(t.scopeKind, t.scopeId, t.version)],
+  (t) => [uniqueIndex("scope_statements_version_idx").on(t.scopeKind, t.scopeId, t.version)],
 );

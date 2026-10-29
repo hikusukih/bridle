@@ -9,8 +9,14 @@ import {
   restoreChannel,
 } from "./channels.js";
 import type { Db } from "./db/index.js";
-import { goals, scopeCards } from "./db/schema.js";
-import { cardVersions, currentCard, type GoalBrief, restoreCard, writeCard } from "./scope-cards.js";
+import { goals, scopeStatements } from "./db/schema.js";
+import {
+  currentStatement,
+  type GoalBrief,
+  restoreStatement,
+  statementVersions,
+  writeStatement,
+} from "./scope-statements.js";
 
 export type Goal = typeof goals.$inferSelect;
 export type GoalWithBrief = Goal & { brief: GoalBrief };
@@ -31,7 +37,7 @@ function cleanTitle(title: unknown): string {
 }
 
 function withBrief(db: Db, goal: Goal): GoalWithBrief {
-  return { ...goal, brief: currentCard(db, "goal", goal.id) as GoalBrief };
+  return { ...goal, brief: currentStatement(db, "goal", goal.id) as GoalBrief };
 }
 
 export function getGoal(db: Db, id: string): GoalWithBrief {
@@ -66,7 +72,7 @@ export function createGoal(db: Db, input: { title?: unknown; brief?: unknown }, 
     };
     tx.insert(goals).values(goal).run();
     // The brief is written by the user (here: the form they filled in), so it is confirmed.
-    writeCard(
+    writeStatement(
       tx as unknown as Db,
       { scopeKind: "goal", scopeId: goal.id, text: brief, author: "user", confirmed: true },
       now,
@@ -92,7 +98,7 @@ export function editGoal(
       t.update(goals).set({ title, updatedAt: now.toISOString() }).where(eq(goals.id, id)).run();
     }
     if (typeof input.brief === "string" && input.brief.trim() !== goal.brief.text) {
-      writeCard(t, { scopeKind: "goal", scopeId: id, text: input.brief, author: "user", confirmed: true }, now);
+      writeStatement(t, { scopeKind: "goal", scopeId: id, text: input.brief, author: "user", confirmed: true }, now);
       t.update(goals).set({ updatedAt: now.toISOString() }).where(eq(goals.id, id)).run();
     }
     return getGoal(t, id);
@@ -101,13 +107,13 @@ export function editGoal(
 
 export function briefHistory(db: Db, id: string): GoalBrief[] {
   getGoal(db, id);
-  return cardVersions(db, "goal", id) as GoalBrief[];
+  return statementVersions(db, "goal", id) as GoalBrief[];
 }
 
 export function restoreBrief(db: Db, id: string, version: number, now = new Date()): GoalWithBrief {
   const goal = getGoal(db, id);
   if (goal.status === "archived") throw new GoalError("archived", "Restore the goal before changing it.");
-  restoreCard(db, "goal", id, version, now);
+  restoreStatement(db, "goal", id, version, now);
   db.update(goals).set({ updatedAt: now.toISOString() }).where(eq(goals.id, id)).run();
   return getGoal(db, id);
 }
@@ -134,7 +140,7 @@ export function deleteGoal(db: Db, id: string): void {
   const goal = getGoal(db, id);
   db.transaction((tx) => {
     const t = tx as unknown as Db;
-    t.delete(scopeCards).where(eq(scopeCards.scopeId, id)).run();
+    t.delete(scopeStatements).where(eq(scopeStatements.scopeId, id)).run();
     try {
       deleteChannel(t, goal.channelId);
     } catch (error) {

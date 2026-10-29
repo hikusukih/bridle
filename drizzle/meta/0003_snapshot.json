@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "48c50894-cbf0-46d8-ba9b-10e33f16b397",
+  "id": "7eba30ee-f450-4d19-b316-dd2ecc0e443e",
   "prevId": "a00afeec-c85a-4c46-91c0-de968573eab0",
   "tables": {
     "app_meta": {
@@ -296,8 +296,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "scope_cards": {
-      "name": "scope_cards",
+    "scope_statements": {
+      "name": "scope_statements",
       "columns": {
         "id": {
           "name": "id",
@@ -357,8 +357,8 @@
         }
       },
       "indexes": {
-        "scope_cards_version_idx": {
-          "name": "scope_cards_version_idx",
+        "scope_statements_version_idx": {
+          "name": "scope_statements_version_idx",
           "columns": [
             "scope_kind",
             "scope_id",
