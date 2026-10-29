@@ -70,6 +70,7 @@ This repo is public. Nothing in it identifies a real person's machines, network 
 - Markdown prose is never hard-wrapped: one line per paragraph or bullet.
 - No Markdown tables; use bullet lists. Docs here are read as plain text.
 - Comments explain why, not what.
+- Terms defined in the glossary in `docs/architecture.md` are in bold at their first use in each document, such as **run**, and plain after that. Use them only in the glossary's meaning, so the core terms don't drift between documents.
 
 ## Engineering conventions
 
