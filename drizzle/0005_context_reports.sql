@@ -5,6 +5,7 @@ CREATE TABLE `context_reports` (
 	`step` integer NOT NULL,
 	`report` text NOT NULL,
 	`messages` text,
+	`tools` text,
 	`created_at` text NOT NULL,
 	FOREIGN KEY (`run_id`) REFERENCES `runs`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON UPDATE no action ON DELETE cascade

@@ -212,9 +212,25 @@ type SentContext = {
     layers: { name: string; tokens: number }[];
     runsDropped: number;
     breaks: string[];
+    overflow: { layer: string; detail: string }[];
   };
-  messages: { role: string; content: string }[] | null;
+  messages: SentMessage[] | null;
+  tools: { name: string; description: string; parameters: unknown }[] | null;
 };
+
+type SentMessage = {
+  role: string;
+  content: string;
+  toolCalls?: { id: string; name: string; arguments: unknown }[];
+  toolCallId?: string;
+};
+
+/** One message as the model received it, tool calls and the call a result answers included. */
+function formatSent(m: SentMessage): string {
+  const head = m.role === "tool" ? `tool (answers ${m.toolCallId}):` : `${m.role}:`;
+  const calls = (m.toolCalls ?? []).map((c) => `\n-> call ${c.id} ${c.name} ${JSON.stringify(c.arguments)}`).join("");
+  return `${head} ${m.content}${calls}`;
+}
 
 /** What the model was sent for one run: layer sizes, and the exact messages while the server still keeps them. */
 function SentView({ runId }: { runId: string }) {
@@ -235,9 +251,23 @@ function SentView({ runId }: { runId: string }) {
             {req.report.runsDropped ? `; ${req.report.runsDropped} older run(s) left out` : ""}
           </p>
           {req.messages ? (
-            <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-slate-100 p-2">
-              {req.messages.map((m) => `${m.role}: ${m.content}`).join("\n\n")}
-            </pre>
+            <>
+              <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-slate-100 p-2">
+                {req.messages.map(formatSent).join("\n\n")}
+              </pre>
+              {req.tools && (
+                <details>
+                  <summary className="cursor-pointer">
+                    Tools offered ({req.tools.map((t) => t.name).join(", ")})
+                  </summary>
+                  <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg bg-slate-100 p-2">
+                    {JSON.stringify(req.tools, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </>
+          ) : req.report.overflow.some((o) => o.layer === "current_run") ? (
+            <p>Nothing was sent: {req.report.overflow.map((o) => o.detail).join("; ")}.</p>
           ) : (
             <p>The exact messages are only kept for a channel's 20 newest runs.</p>
           )}

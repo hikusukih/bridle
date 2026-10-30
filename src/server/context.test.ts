@@ -6,6 +6,7 @@ import { openDatabase } from "./db/index.js";
 import type { Message } from "./model/adapter.js";
 import { ScriptedModel } from "./model/scripted.js";
 import { defaultLimits, RunEngine } from "./runs.js";
+import { ToolRegistry } from "./tools/registry.js";
 
 const run = (id: string, words: number): { id: string; messages: Message[] } => ({
   id,
@@ -16,11 +17,11 @@ const run = (id: string, words: number): { id: string; messages: Message[] } => 
 });
 
 describe("assembleContext", () => {
-  it("orders instructions, scope card, summary, past runs, then the current run", () => {
+  it("orders instructions, scope statement, summary, past runs, then the current run", () => {
     const { messages, report } = assembleContext({
       past: [run("r1", 10)],
       current: [{ role: "user", content: "now" }],
-      scopeCard: "Purpose: Rust",
+      scopeStatement: { kind: "purpose", text: "Purpose: Rust" },
       summary: "Earlier facts",
     });
     expect(messages.map((m) => m.role)).toEqual(["system", "system", "system", "user", "assistant", "user"]);
@@ -29,7 +30,7 @@ describe("assembleContext", () => {
     expect(messages.at(-1)?.content).toBe("now");
     expect(report.layers.map((l) => l.name)).toEqual([
       "instructions",
-      "scope_card",
+      "scope_statement",
       "summary",
       "recent_runs",
       "current_run",
@@ -98,6 +99,27 @@ describe("the run engine and context", () => {
     });
     expect(model.requests).toHaveLength(0);
     expect(runContext(db, r.id)[0]?.report.overflow[0]?.layer).toBe("current_run");
+  });
+
+  it("records an overflow at the step it happened, with nothing sent", async () => {
+    const db = openDatabase(":memory:");
+    const tools = new ToolRegistry().register({
+      name: "huge",
+      description: "huge",
+      effect: "read",
+      parameters: { type: "object", properties: {} },
+      execute: async () => "x".repeat(100_000),
+    });
+    const model = new ScriptedModel({ turns: [{ toolCalls: [{ id: "c1", name: "huge", arguments: {} }] }] });
+    const engine = new RunEngine(db, model, { ...defaultLimits, contextWindow: 5_000 }, tools);
+    const r = engine.start(createChannel(db, "C").id, "go");
+    await engine.whenSettled(r.id);
+    expect(engine.get(r.id)?.stopReason).toBe("this run ran out of room in the model's window");
+    const stored = runContext(db, r.id);
+    expect(stored.map((s) => s.step)).toEqual([1, 2]);
+    expect(stored[0]?.tools?.map((t) => t.name)).toEqual(["huge"]);
+    expect(stored[1]).toMatchObject({ messages: null, tools: null });
+    expect(stored[1]?.report.overflow[0]?.layer).toBe("current_run");
   });
 
   it("keeps the exact messages for only the newest 20 runs of a channel", async () => {

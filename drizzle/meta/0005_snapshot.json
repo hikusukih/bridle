@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "5d81d5a5-d999-45b9-ab24-b951f3641353",
+  "id": "39ebc74e-f64c-46e5-945d-b40b17b74458",
   "prevId": "12215186-aeba-4bc7-9115-ac24b824e3a6",
   "tables": {
     "app_meta": {
@@ -223,6 +223,13 @@
         },
         "messages": {
           "name": "messages",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tools": {
+          "name": "tools",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

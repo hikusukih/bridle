@@ -364,13 +364,28 @@ export class RunEngine {
           calls = [];
           let stop: string | undefined;
           const tools = this.tools.size ? this.tools.definitions() : undefined;
-          const assembled = assembleContext({
-            past,
-            current: messages,
-            window: this.limits.contextWindow,
-            toolTokens: tools ? estimateTokens(JSON.stringify(tools)) : 0,
+          let assembled: ReturnType<typeof assembleContext>;
+          try {
+            assembled = assembleContext({
+              past,
+              current: messages,
+              window: this.limits.contextWindow,
+              toolTokens: tools ? estimateTokens(JSON.stringify(tools)) : 0,
+            });
+          } catch (error) {
+            // Nothing is sent, but keep the report at the step it happened so the debug view shows why.
+            if (error instanceof ContextOverflow)
+              recordContext(this.db, { runId, channelId, step, messages: null, report: error.report });
+            throw error;
+          }
+          recordContext(this.db, {
+            runId,
+            channelId,
+            step,
+            messages: assembled.messages,
+            tools,
+            report: assembled.report,
           });
-          recordContext(this.db, { runId, channelId, step, messages: assembled.messages, report: assembled.report });
           const request = { messages: assembled.messages, tools, signal: controller.signal };
           for await (const ev of model.stream(request)) {
             if (ev.type === "text") text += ev.text;
@@ -471,11 +486,7 @@ export class RunEngine {
       if (cause instanceof CancelledByUser) return this.finish(runId, "cancelled", "cancelled by you");
       if (cause instanceof TimeLimit) return this.stopForLimit(runId, `time limit (${maxMillis / 1000}s) reached`);
       if (cause instanceof ApprovalTimeout) return this.stopForLimit(runId, "approval not given");
-      if (error instanceof ContextOverflow) {
-        // The report was not stored with a request, since none was sent; keep it so the debug view shows why.
-        recordContext(this.db, { runId, channelId, step: 0, messages: [], report: error.report });
-        return this.stopForLimit(runId, error.message);
-      }
+      if (error instanceof ContextOverflow) return this.stopForLimit(runId, error.message);
       const message = error instanceof ModelError ? error.message : "Something went wrong inside the server.";
       this.append(runId, "error", { message, ...(error instanceof ModelError ? { kind: error.kind } : {}) });
       this.finish(runId, "failed", message);

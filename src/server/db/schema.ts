@@ -125,6 +125,8 @@ export const contextReports = sqliteTable(
     report: text("report").notNull(),
     // JSON Message[]; set to null once the run falls out of the channel's most recent 20.
     messages: text("messages"),
+    // JSON ToolDefinition[] sent with the request, kept and pruned with messages; null when none were sent.
+    tools: text("tools"),
     createdAt: text("created_at").notNull(),
   },
   (t) => [
