@@ -9,7 +9,7 @@ The slots tasks below are not installed yet. What runs today, each with its prom
 - brindle daily box (`daily-box-prompt.md`): every morning, working boxes for up to 4 hours.
 - brindle planning (`planning-prompt.md`): once a day, after the daily box.
 - usage maximizer (`usage-maximizer-prompt.md`): Wednesday evening, working boxes until 23:30.
-- brindle PR review (`pr-review-prompt.md`): no schedule; GitHub pull request triggers for `opened` and `synchronize` on non-draft PRs.
+- brindle PR review (`pr-review-prompt.md`): no schedule; a GitHub trigger on PRs being opened. The task editor offers no trigger for new pushes, so a session that pushes review fixes fires this task itself (`CLAUDE.md`, Addressing reviews).
 
 When a task's prompt changes, change its file in the same PR, so the repo keeps the text to paste.
 

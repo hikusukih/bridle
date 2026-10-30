@@ -31,12 +31,12 @@ If a box turns out too big for one session, split it in `.agents/PLAN.md` within
 
 ## Addressing reviews
 
-The review task posts a comment starting `Brindle review:` on each ready PR and again after each push. The session that built a box has usually ended by then, so later sessions act on it.
+The review task posts a comment starting `Brindle review:` when a PR opens, and again whenever it is started after a push. The session that built a box has usually ended by then, so later sessions act on it.
 
 - Take a ready box PR whose latest `Brindle review:` says `needs changes` and is newer than its last commit other than a `main` merge. Leave `needs your decision` to the user, and leave PRs that aren't box PRs.
 - Skip it if it has the `addressing-review` label, unless that review is more than 6 hours old: then an earlier session was cut off, so take it over. Otherwise add the label before any other work, so two sessions don't fix the same PR.
 - Check out its `box/<ID>` branch and merge `main` in if it is behind. Fix each finding that is in the box's scope. For one that isn't, or that you think is wrong, don't widen the PR: say why in your reply, and file a proposal if it is a plan change.
-- Commit all the fixes, then, before pushing, reply to the review with one line per finding (fixed, naming the commit, or not fixing and why) and update the PR description: the review task starts as soon as the push lands and reads those replies. Push everything as one push, so it runs once, then remove the label.
+- Commit all the fixes, then, before pushing, reply to the review with one line per finding (fixed, naming the commit, or not fixing and why) and update the PR description: the review task reads those replies when it runs. Push everything as one push, then remove the label. The review task isn't triggered by pushes, so start it yourself: find the scheduled task named `brindle PR review` with the scheduled-task tools (`list_triggers`) and fire it with a message naming the PR. If you can't, say so in the session's final message; the user can run it by hand.
 - This doesn't count as the session's box, and the session never merges a PR it fixed (step 5).
 
 ## Merging box PRs
