@@ -1,5 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api, type Channel, type Run, type RunEvent } from "./api";
+import { AuthedEventSource } from "./events";
 import { channelIdFromHash } from "./screens";
 
 const button = "min-h-11 rounded-lg px-3 text-sm font-medium";
@@ -245,7 +246,7 @@ function ChannelView({ id }: { id: string }) {
   const [problem, setProblem] = useState<string | null>(null);
   const [defaultModel, setDefaultModel] = useState<string | null>(null);
   const [modelText, setModelText] = useState("");
-  const source = useRef<EventSource | null>(null);
+  const source = useRef<AuthedEventSource | null>(null);
 
   const reload = useCallback(async () => {
     setRuns(await api<Run[]>(`/api/channels/${id}/runs`));
@@ -273,7 +274,7 @@ function ChannelView({ id }: { id: string }) {
   const follow = useCallback(
     (runId: string) => {
       source.current?.close();
-      const es = new EventSource(`/api/runs/${runId}/events`);
+      const es = new AuthedEventSource(`/api/runs/${runId}/events`);
       source.current = es;
       const take = (e: Event) => {
         // "error" is also the name of EventSource's own connection failure, which carries no data.
@@ -299,7 +300,7 @@ function ChannelView({ id }: { id: string }) {
         reload().catch((err: unknown) => setProblem((err as Error).message));
       });
       es.onerror = () => {
-        if (es.readyState === EventSource.CLOSED) {
+        if (es.readyState === AuthedEventSource.CLOSED) {
           setProblem("Lost the connection to the server.");
           reload().catch(() => {});
         }

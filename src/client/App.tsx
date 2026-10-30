@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Greeting } from "../server/app";
 import { ChannelsScreen } from "./Channels";
+import { LoginGate } from "./Login";
 import { type ScreenId, screenFromHash, screens } from "./screens";
 
 type State = { kind: "loading" } | { kind: "ready"; greeting: Greeting } | { kind: "error"; message: string };
@@ -57,7 +58,7 @@ function NavLinks({ current, orientation }: { current: ScreenId; orientation: "r
   );
 }
 
-export function App() {
+function Shell() {
   const screen = useScreen();
   const status = useServerStatus();
   const active = screens.find((s) => s.id === screen) ?? screens[0];
@@ -100,5 +101,13 @@ export function App() {
         </div>
       </main>
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <LoginGate>
+      <Shell />
+    </LoginGate>
   );
 }

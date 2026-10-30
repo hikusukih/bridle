@@ -55,12 +55,13 @@ describe("App", () => {
     }
   });
 
-  it("offers all four screens in the navigation", () => {
+  it("offers all four screens in the navigation", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => Response.json(url.startsWith("/api/channels") ? [] : { message: "", since: "" })),
     );
     render(<App />);
+    await screen.findByText("No channels yet");
     for (const label of ["Channels", "Goals", "Feed", "Artifacts"]) {
       expect(screen.getAllByRole("link", { name: label }).length).toBeGreaterThan(0);
     }
