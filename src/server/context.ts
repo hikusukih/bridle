@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import type { Db } from "./db/index.js";
 import { contextReports, runs } from "./db/schema.js";
@@ -34,9 +34,22 @@ export type ContextReport = {
   firstRunId: string | null;
   lastRunId: string | null;
   /** Planned reasons the start of the prompt differs from the previous request's. */
-  breaks: string[];
+  breaks: Break[];
+  /** What the next request compares against to find a planned break. Absent on reports stored before they existed. */
+  model?: string;
+  toolSet?: string;
+  instructions?: string;
   overflow: { layer: LayerName; detail: string }[];
 };
+
+export type Break = "emergency_drop" | "model_change" | "tool_set_change" | "instructions_change";
+
+/** A short fingerprint, so a report can tell whether the tool set or instructions changed without storing them twice. */
+export const fingerprint = (value: unknown) =>
+  createHash("sha256").update(JSON.stringify(value)).digest("hex").slice(0, 16);
+
+/** The parts of the channel's previous request that decide whether this one starts the same way. */
+export type PreviousRequest = Pick<ContextReport, "firstRunId" | "model" | "toolSet" | "instructions">;
 
 export class ContextOverflow extends Error {
   constructor(readonly report: ContextReport) {
@@ -54,6 +67,11 @@ export type ContextInput = {
   window?: number;
   /** Tokens the tool definitions will cost. */
   toolTokens?: number;
+  /** The channel's model spec and a fingerprint of the tool definitions, compared with the previous request's. */
+  model?: string;
+  toolSet?: string;
+  /** The channel's previous request: history keeps its starting run until it outgrows its share again. */
+  previous?: PreviousRequest | null;
   /** The scope statement and running summary; both arrive with purpose statements (P3.3) and compaction (P3.4). */
   scopeStatement?: { kind: "purpose" | "goal_brief"; text: string };
   summary?: string;
@@ -98,7 +116,16 @@ export function assembleContext(input: ContextInput): { messages: Message[]; rep
     lastRunId: null,
     breaks: [],
     overflow: [],
+    model: input.model,
+    toolSet: input.toolSet,
+    instructions: fingerprint(harnessInstructions),
   };
+  const prev = input.previous;
+  // A report from before these fields existed has nothing to compare, so it is not counted as a break.
+  if (prev?.model !== undefined && prev.model !== report.model) report.breaks.push("model_change");
+  if (prev?.toolSet !== undefined && prev.toolSet !== report.toolSet) report.breaks.push("tool_set_change");
+  if (prev?.instructions !== undefined && prev.instructions !== report.instructions)
+    report.breaks.push("instructions_change");
   if (fixed > budget) {
     layers.push({ name: "current_run", tokens: tokensOf(input.current), budget: null });
     report.overflow.push({ layer: "current_run", detail: `${fixed} tokens needed, ${budget} available` });
@@ -108,8 +135,11 @@ export function assembleContext(input: ContextInput): { messages: Message[]; rep
   // Whole runs only, so a tool call is never parted from its result.
   const share = budget - fixed;
   const sizes = input.past.map((r) => tokensOf(r.messages));
-  let total = sizes.reduce((a, b) => a + b, 0);
-  let from = 0;
+  // Start where the previous request started, so a drop is not repeated on every message: without this, each
+  // new run would push the 40% cut forward by one and the start of the prompt would change every time.
+  const anchor = prev?.firstRunId ? input.past.findIndex((r) => r.id === prev.firstRunId) : -1;
+  let from = Math.max(0, anchor);
+  let total = sizes.slice(from).reduce((a, b) => a + b, 0);
   if (total > share) {
     // Chunked: drop down to the target, not just under the line, so the next message doesn't drop again.
     while (from < input.past.length && total > share * dropTarget) total -= sizes[from++] ?? 0;
@@ -125,6 +155,7 @@ export function assembleContext(input: ContextInput): { messages: Message[]; rep
     { name: "current_run", tokens: tokensOf(input.current), budget: null },
   );
   report.runsIncluded = kept.length;
+  // Runs left out, whether by this request or an earlier one.
   report.runsDropped = from;
   report.firstRunId = kept[0]?.id ?? null;
   report.lastRunId = kept.at(-1)?.id ?? null;
@@ -194,4 +225,18 @@ export function runContext(db: Db, runId: string): StoredContext[] {
       tools: r.tools ? (JSON.parse(r.tools) as ToolDefinition[]) : null,
       createdAt: r.createdAt,
     }));
+}
+
+/** The channel's most recent request that was sent, newest run and step first. */
+export function previousRequest(db: Db, channelId: string): PreviousRequest | null {
+  const row = db
+    .select({ report: contextReports.report })
+    .from(contextReports)
+    .innerJoin(runs, eq(runs.id, contextReports.runId))
+    // An overflow sent nothing, so it isn't what the server last read; the newest sent request always keeps its messages.
+    .where(and(eq(contextReports.channelId, channelId), isNotNull(contextReports.messages)))
+    .orderBy(desc(runs.startedAt), desc(contextReports.step))
+    .limit(1)
+    .get();
+  return row ? (JSON.parse(row.report) as ContextReport) : null;
 }

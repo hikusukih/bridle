@@ -249,6 +249,7 @@ function SentView({ runId }: { runId: string }) {
             Step {req.step}: {req.report.layers.map((l) => `${l.name} ${l.tokens}`).join(", ")} of {req.report.budget}{" "}
             tokens
             {req.report.runsDropped ? `; ${req.report.runsDropped} older run(s) left out` : ""}
+            {req.report.breaks.length ? `; prompt start changed: ${req.report.breaks.join(", ")}` : ""}
           </p>
           {req.messages ? (
             <>
