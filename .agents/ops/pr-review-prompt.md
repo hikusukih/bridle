@@ -1,6 +1,6 @@
 # PR review prompt
 
-The stored prompt for the **brindle PR review** scheduled task, as installed. Triggers: a GitHub trigger on PRs being opened; sessions fire it after pushing review fixes, which works only because an agent created this task (agents may fire only those). Paste everything below the rule into the task; keep the text free of angle brackets, which the task editor strips.
+The stored prompt for the **brindle PR review** scheduled task, as installed. Triggers: a GitHub trigger on PRs being opened, plus a daily schedule after the daily box; a run with no event re-reviews every PR with new commits. Paste everything below the rule into the task; keep the text free of angle brackets, which the task editor strips.
 
 ---
 
