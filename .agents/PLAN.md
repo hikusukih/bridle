@@ -109,7 +109,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P4.6** Goal templates behind the category buttons. _needs P4.3a_
 
-- [ ] **P4.7** Acceptance: "learn Rust" produces a curriculum held in the goal's state document, visible in the gallery, and a later lesson updates its progress. _needs P4.2, P4.4, P4.5, P2.2_
+- [ ] **P4.7** Acceptance: "learn Rust" produces a curriculum held in the goal's state document, visible in the gallery, and a later lesson updates its progress. _needs P4.2, P4.4, P4.4a, P4.4b, P4.5, P2.2_
 
 - [ ] **P4.9** `propose_goal`: from a conversation the model drafts a goal (title, brief, optionally a schedule) as a card the user edits and confirms before anything is created, never creating one itself; with an eval scenario where a chat about learning Rust yields a sensible draft. _needs P4.3, P4.5_
 
