@@ -29,7 +29,7 @@ A run is one unit of agent work: a trigger, a scope, and the loop that follows.
 - **Trigger:** a user message, a goal's schedule firing, an accepted suggestion, or another run handing off.
 - **Scope:** the channel or goal the run belongs to. The scope decides what context the run gets and where its output goes.
 - **The loop:** assemble a request, call the model, execute any tool calls, feed results back, repeat until the model finishes or a limit is hit. Every step is persisted as an event (text, tool call, tool result, artifact, error), streamed to the UI as it happens.
-- **Limits:** every run has a step limit, a token limit, a wall-clock limit, and an optional cost budget. Hitting one ends the run with a clear "stopped because" event, never silently.
+- **Limits:** every run has a step limit, a token limit and a wall-clock limit. Hitting one ends the run with a clear "stopped because" event, never silently.
 
 Every surface either shows runs or creates them. A goal's daily brief, a feed watcher, and a chat message are the same machinery with different triggers and destinations.
 
