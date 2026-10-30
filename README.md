@@ -1,6 +1,6 @@
 # Brindle
 
-[![CI](https://github.com/hikusukih/bridle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hikusukih/bridle/actions/workflows/ci.yml)
+[![CI](https://github.com/hikusukih/brindle/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hikusukih/brindle/actions/workflows/ci.yml)
 
 A self-hosted personal agent with a calm, phone-friendly home: persistent **channels** for conversations, **goals** that keep their own state and act on a schedule, a **feed** of what scheduled work found (also published as RSS), one gallery of **artifacts**, and opt-in **suggestions**. Models are pluggable; credentials go through a key manager that keeps them out of the model's sight.
 
@@ -69,7 +69,7 @@ JSON
 BRINDLE_MODEL=scripted BRINDLE_SCRIPTED_FIXTURE=fixture.json npm start
 ```
 
-Each turn answers one model call and the script does not loop, so a fixture of N turns serves N calls across all runs until the server restarts. Runs left working by a previous process are marked failed at startup.
+Each turn answers one model call and the script does not loop, so a fixture of N turns serves N calls across all **runs** until the server restarts. Runs left working by a previous process are marked failed at startup.
 
 ### Tools
 
