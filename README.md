@@ -69,7 +69,7 @@ JSON
 BRINDLE_MODEL=scripted BRINDLE_SCRIPTED_FIXTURE=fixture.json npm start
 ```
 
-Each turn answers one model call and the script does not loop, so a fixture of N turns serves N calls across all runs until the server restarts. Runs left working by a previous process are marked failed at startup.
+Each turn answers one model call and the script does not loop, so a fixture of N turns serves N calls across all **runs** until the server restarts. Runs left working by a previous process are marked failed at startup.
 
 ### Tools
 
