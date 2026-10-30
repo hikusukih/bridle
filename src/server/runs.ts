@@ -1,7 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { asc, eq, inArray } from "drizzle-orm";
 import { getChannel } from "./channels.js";
-import { assembleContext, ContextOverflow, defaultContextWindow, type PastRun, recordContext } from "./context.js";
+import {
+  assembleContext,
+  ContextOverflow,
+  defaultContextWindow,
+  fingerprint,
+  type PastRun,
+  previousRequest,
+  recordContext,
+} from "./context.js";
 import type { Db } from "./db/index.js";
 import { events, runs } from "./db/schema.js";
 import { type Message, type ModelAdapter, ModelError, type ToolCall } from "./model/adapter.js";
@@ -371,6 +379,9 @@ export class RunEngine {
               current: messages,
               window: this.limits.contextWindow,
               toolTokens: tools ? estimateTokens(JSON.stringify(tools)) : 0,
+              model: getChannel(this.db, channelId).model ?? "default",
+              toolSet: fingerprint(tools ?? []),
+              previous: previousRequest(this.db, channelId),
             });
           } catch (error) {
             // Nothing is sent, but keep the report at the step it happened so the debug view shows why.
