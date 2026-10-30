@@ -3,11 +3,13 @@ import { eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
+import type { ArtifactStore } from "./artifacts.js";
 import {
   archiveChannel,
   ChannelError,
   createChannel,
   deleteChannel,
+  getChannel,
   listChannels,
   renameChannel,
   restoreChannel,
@@ -16,7 +18,21 @@ import {
 import { runContext } from "./context.js";
 import type { Db } from "./db/index.js";
 import { appMeta } from "./db/schema.js";
+import {
+  archiveGoal,
+  briefHistory,
+  createGoal,
+  deleteGoal,
+  editGoal,
+  GoalError,
+  getGoal,
+  listGoals,
+  refuseGoalChannel,
+  restoreBrief,
+  restoreGoal,
+} from "./goals.js";
 import { channelTranscript, type RunEngine, RunError, type RunEvent } from "./runs.js";
+import { ScopeStatementError } from "./scope-statements.js";
 
 export type Greeting = {
   message: string;
@@ -29,11 +45,13 @@ type AppOptions = {
   engine?: RunEngine;
   // What channels may be set to use; absent, setting a channel's model is refused.
   models?: { defaultSpec?: string; validate: (spec: string) => void };
+  // Where artifacts live; absent, channel deletes cannot remove any.
+  artifacts?: ArtifactStore;
   // Built client to serve; absent in development, where Vite serves it.
   clientRoot?: string;
 };
 
-export function createApp({ db, engine, models, clientRoot }: AppOptions) {
+export function createApp({ db, engine, models, artifacts, clientRoot }: AppOptions) {
   const app = new Hono();
 
   app.get("/api/greeting", (c) => {
@@ -48,6 +66,11 @@ export function createApp({ db, engine, models, clientRoot }: AppOptions) {
   app.onError((err, c) => {
     if (err instanceof ChannelError) {
       const status = err.code === "not_found" ? 404 : err.code === "archived" ? 409 : 400;
+      return c.json({ error: err.code, message: err.message }, status);
+    }
+    if (err instanceof GoalError || err instanceof ScopeStatementError) {
+      const status =
+        err.code === "not_found" ? 404 : err.code === "archived" || err.code === "goal_channel" ? 409 : 400;
       return c.json({ error: err.code, message: err.message }, status);
     }
     if (err instanceof RunError) {
@@ -122,7 +145,10 @@ export function createApp({ db, engine, models, clientRoot }: AppOptions) {
 
   app.get("/api/channels", (c) => c.json(listChannels(db, { archived: c.req.query("archived") === "true" })));
   app.post("/api/channels", async (c) => c.json(createChannel(db, await nameFrom(c)), 201));
-  app.patch("/api/channels/:id", async (c) => c.json(renameChannel(db, c.req.param("id"), await nameFrom(c))));
+  app.patch("/api/channels/:id", async (c) => {
+    refuseGoalChannel(db, c.req.param("id"));
+    return c.json(renameChannel(db, c.req.param("id"), await nameFrom(c)));
+  });
   app.get("/api/models", (c) => c.json({ default: models?.defaultSpec ?? null }));
   app.post("/api/channels/:id/model", async (c) => {
     const body = (await c.req.json().catch(() => ({}))) as { model?: unknown };
@@ -133,10 +159,47 @@ export function createApp({ db, engine, models, clientRoot }: AppOptions) {
       });
     return c.json(setChannelModel(db, c.req.param("id"), body.model, validate));
   });
-  app.post("/api/channels/:id/archive", (c) => c.json(archiveChannel(db, c.req.param("id"))));
-  app.post("/api/channels/:id/restore", (c) => c.json(restoreChannel(db, c.req.param("id"))));
-  app.delete("/api/channels/:id", (c) => {
-    deleteChannel(db, c.req.param("id"));
+  app.post("/api/channels/:id/archive", (c) => {
+    refuseGoalChannel(db, c.req.param("id"));
+    return c.json(archiveChannel(db, c.req.param("id")));
+  });
+  app.post("/api/channels/:id/restore", (c) => {
+    refuseGoalChannel(db, c.req.param("id"));
+    return c.json(restoreChannel(db, c.req.param("id")));
+  });
+  app.get("/api/channels/:id/artifacts", (c) => {
+    const id = c.req.param("id");
+    getChannel(db, id);
+    return c.json(artifacts?.forChannel(id) ?? []);
+  });
+  // The body may list artifact ids to delete with the channel; with none, every artifact is kept.
+  app.delete("/api/channels/:id", async (c) => {
+    const id = c.req.param("id");
+    getChannel(db, id);
+    refuseGoalChannel(db, id);
+    const body = (await c.req.json().catch(() => null)) as { deleteArtifacts?: unknown } | null;
+    const ids = body?.deleteArtifacts;
+    if (ids !== undefined && (!Array.isArray(ids) || ids.some((x) => typeof x !== "string"))) {
+      throw new HTTPException(400, { message: "deleteArtifacts is a list of artifact ids." });
+    }
+    if (ids?.length) artifacts?.deleteForChannel(id, ids as string[]);
+    deleteChannel(db, id);
+    return c.body(null, 204);
+  });
+
+  const body = async (c: Context) => (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+  app.get("/api/goals", (c) => c.json(listGoals(db, { archived: c.req.query("archived") === "true" })));
+  app.post("/api/goals", async (c) => c.json(createGoal(db, await body(c)), 201));
+  app.get("/api/goals/:id", (c) => c.json(getGoal(db, c.req.param("id"))));
+  app.patch("/api/goals/:id", async (c) => c.json(editGoal(db, c.req.param("id"), await body(c))));
+  app.get("/api/goals/:id/brief-versions", (c) => c.json(briefHistory(db, c.req.param("id"))));
+  app.post("/api/goals/:id/brief-versions/:version/restore", (c) =>
+    c.json(restoreBrief(db, c.req.param("id"), Number(c.req.param("version")))),
+  );
+  app.post("/api/goals/:id/archive", (c) => c.json(archiveGoal(db, c.req.param("id"))));
+  app.post("/api/goals/:id/restore", (c) => c.json(restoreGoal(db, c.req.param("id"))));
+  app.delete("/api/goals/:id", (c) => {
+    deleteGoal(db, c.req.param("id"));
     return c.body(null, 204);
   });
 
