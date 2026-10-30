@@ -3,11 +3,13 @@ import { eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
+import type { ArtifactStore } from "./artifacts.js";
 import {
   archiveChannel,
   ChannelError,
   createChannel,
   deleteChannel,
+  getChannel,
   listChannels,
   renameChannel,
   restoreChannel,
@@ -41,11 +43,13 @@ type AppOptions = {
   engine?: RunEngine;
   // What channels may be set to use; absent, setting a channel's model is refused.
   models?: { defaultSpec?: string; validate: (spec: string) => void };
+  // Where artifacts live; absent, channel deletes cannot remove any.
+  artifacts?: ArtifactStore;
   // Built client to serve; absent in development, where Vite serves it.
   clientRoot?: string;
 };
 
-export function createApp({ db, engine, models, clientRoot }: AppOptions) {
+export function createApp({ db, engine, models, artifacts, clientRoot }: AppOptions) {
   const app = new Hono();
 
   app.get("/api/greeting", (c) => {
@@ -149,8 +153,22 @@ export function createApp({ db, engine, models, clientRoot }: AppOptions) {
   });
   app.post("/api/channels/:id/archive", (c) => c.json(archiveChannel(db, c.req.param("id"))));
   app.post("/api/channels/:id/restore", (c) => c.json(restoreChannel(db, c.req.param("id"))));
-  app.delete("/api/channels/:id", (c) => {
-    deleteChannel(db, c.req.param("id"));
+  app.get("/api/channels/:id/artifacts", (c) => {
+    const id = c.req.param("id");
+    getChannel(db, id);
+    return c.json(artifacts?.forChannel(id) ?? []);
+  });
+  // The body may list artifact ids to delete with the channel; with none, every artifact is kept.
+  app.delete("/api/channels/:id", async (c) => {
+    const id = c.req.param("id");
+    getChannel(db, id);
+    const body = (await c.req.json().catch(() => null)) as { deleteArtifacts?: unknown } | null;
+    const ids = body?.deleteArtifacts;
+    if (ids !== undefined && (!Array.isArray(ids) || ids.some((x) => typeof x !== "string"))) {
+      throw new HTTPException(400, { message: "deleteArtifacts is a list of artifact ids." });
+    }
+    if (ids?.length) artifacts?.deleteForChannel(id, ids as string[]);
+    deleteChannel(db, id);
     return c.body(null, 204);
   });
 

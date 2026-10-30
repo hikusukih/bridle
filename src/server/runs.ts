@@ -424,6 +424,7 @@ export class RunEngine {
                   scope,
                   signal: controller.signal,
                   log: (message) => console.log(`[${call.name}] ${message}`),
+                  emit: (type, data) => this.append(runId, type, data),
                 });
               } catch (error) {
                 // A cancel or a limit during the tool is the run's to handle, not a tool failure.
