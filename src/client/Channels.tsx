@@ -163,7 +163,16 @@ function ChannelList() {
   );
 }
 
-const eventTypes = ["message", "text", "tool_call", "tool_result", "artifact", "error"];
+const eventTypes = [
+  "message",
+  "text",
+  "tool_call",
+  "tool_result",
+  "approval_request",
+  "approval_decision",
+  "artifact",
+  "error",
+];
 
 function parse(e: RunEvent): Record<string, unknown> {
   try {
@@ -195,11 +204,47 @@ function EventLine({ event }: { event: RunEvent }) {
   }
 }
 
+function ApprovalCard(props: {
+  tool: string;
+  reason: string;
+  args: unknown;
+  decision: string | null;
+  ended: boolean;
+  onDecide: (decision: "approve" | "decline") => void;
+}) {
+  const { tool, reason, args, decision, ended, onDecide } = props;
+  return (
+    <section
+      aria-label={`Approval for ${tool}`}
+      className="flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm"
+    >
+      <p className="font-medium">{reason}</p>
+      <pre className="overflow-x-auto whitespace-pre-wrap text-xs text-slate-700">{JSON.stringify(args, null, 2)}</pre>
+      {decision ? (
+        <p className="text-xs text-slate-600">{decision === "approve" ? "Approved." : "Declined."}</p>
+      ) : ended ? (
+        <p className="text-xs text-slate-600">Not answered before the run ended.</p>
+      ) : (
+        <div className="flex gap-2">
+          <button type="button" className={primary} onClick={() => onDecide("approve")}>
+            Approve
+          </button>
+          <button type="button" className={quiet} onClick={() => onDecide("decline")}>
+            Decline
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function ChannelView({ id }: { id: string }) {
   const [channel, setChannel] = useState<Channel | null>(null);
   const [runs, setRuns] = useState<Run[]>([]);
   const [text, setText] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
+  const [defaultModel, setDefaultModel] = useState<string | null>(null);
+  const [modelText, setModelText] = useState("");
   const source = useRef<EventSource | null>(null);
 
   const reload = useCallback(async () => {
@@ -208,6 +253,9 @@ function ChannelView({ id }: { id: string }) {
 
   useEffect(() => {
     setChannel(null);
+    api<{ default: string | null }>("/api/models")
+      .then((m) => setDefaultModel(m.default))
+      .catch(() => {});
     api<Channel[]>("/api/channels")
       .then(async (active) => {
         const found =
@@ -273,7 +321,26 @@ function ChannelView({ id }: { id: string }) {
     }
   };
 
-  const running = runs.find((r) => r.status === "running");
+  const decide = async (runId: string, callId: string, decision: "approve" | "decline") => {
+    try {
+      await api(`/api/runs/${runId}/approvals/${callId}`, { method: "POST", body: { decision } });
+    } catch (err) {
+      setProblem((err as Error).message);
+    }
+  };
+
+  const chooseModel = async (model: string | null) => {
+    try {
+      setChannel(await api<Channel>(`/api/channels/${id}/model`, { method: "POST", body: { model } }));
+      setModelText("");
+      setProblem(null);
+    } catch (err) {
+      setProblem((err as Error).message);
+    }
+  };
+
+  // A run waiting for an approval is still working as far as the channel is concerned.
+  const running = runs.find((r) => r.status === "running" || r.status === "waiting");
   const readOnly = channel?.archivedAt != null;
 
   return (
@@ -282,12 +349,52 @@ function ChannelView({ id }: { id: string }) {
         ← All channels
       </a>
       <h1 className="text-2xl font-semibold">{channel?.name ?? "Channel"}</h1>
+      {channel && (
+        <div className="flex flex-col gap-2 text-sm text-slate-600">
+          <p>Model: {channel.model ?? (defaultModel ? `${defaultModel} (default)` : "none configured")}</p>
+          {!readOnly && (
+            <form
+              className="flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                chooseModel(modelText.trim() || null);
+              }}
+            >
+              <input
+                aria-label="Model for this channel"
+                placeholder="provider:name, such as openai:gpt-4o"
+                value={modelText}
+                onChange={(e) => setModelText(e.target.value)}
+                className="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-300 px-3"
+              />
+              <button type="submit" className={quiet}>
+                {modelText.trim() ? "Set model" : "Use default"}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
       <div className="flex flex-col gap-4">
         {runs.map((run) => (
           <section key={run.id} aria-label="Run" className="flex flex-col gap-2">
-            {run.events.map((ev) => (
-              <EventLine key={ev.seq} event={ev} />
-            ))}
+            {run.events.map((ev) => {
+              if (ev.type === "approval_request") {
+                const d = parse(ev);
+                const answer = run.events.find((x) => x.type === "approval_decision" && parse(x).callId === d.callId);
+                return (
+                  <ApprovalCard
+                    key={ev.seq}
+                    tool={String(d.tool)}
+                    reason={String(d.reason)}
+                    args={d.arguments}
+                    decision={answer ? String(parse(answer).decision) : null}
+                    ended={run.status !== "running" && run.status !== "waiting"}
+                    onDecide={(decision) => decide(run.id, String(d.callId), decision)}
+                  />
+                );
+              }
+              return <EventLine key={ev.seq} event={ev} />;
+            })}
             {run.status !== "running" &&
               run.status !== "done" &&
               run.stopReason &&

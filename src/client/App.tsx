@@ -68,7 +68,7 @@ export function App() {
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white md:static md:w-52 md:shrink-0 md:border-t-0 md:border-r"
       >
-        <div className="hidden px-6 pt-5 pb-2 text-lg font-semibold md:block">Bridle</div>
+        <div className="hidden px-6 pt-5 pb-2 text-lg font-semibold md:block">Brindle</div>
         <div className="md:hidden">
           <NavLinks current={screen} orientation="bar" />
         </div>

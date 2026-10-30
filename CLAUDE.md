@@ -1,6 +1,6 @@
 # Working in this repo
 
-Bridle is a self-hosted personal agent: a harness plus a phone-friendly web app. `docs/architecture.md` is the design, `.agents/PLAN.md` is the work queue, `docs/decisions.md` holds open product questions and settled answers. Process (how agents are managed) lives under `.agents/`: the plan, `.agents/decisions.md` and process design notes such as `.agents/design/slots.md`.
+Brindle is a self-hosted personal agent: a harness plus a phone-friendly web app. `docs/architecture.md` is the design, `.agents/PLAN.md` is the work queue, `docs/decisions.md` holds open product questions and settled answers. Process (how agents are managed) lives under `.agents/`: the plan, `.agents/decisions.md` and process design notes such as `.agents/design/slots.md`.
 
 ## A session's shape
 
@@ -70,6 +70,7 @@ This repo is public. Nothing in it identifies a real person's machines, network 
 - Markdown prose is never hard-wrapped: one line per paragraph or bullet.
 - No Markdown tables; use bullet lists. Docs here are read as plain text.
 - Comments explain why, not what.
+- Terms defined in the glossary in `docs/architecture.md` are in bold at their first use in each document, such as **run**, and plain after that. Use them only in the glossary's meaning, so the core terms don't drift between documents.
 
 ## Engineering conventions
 
