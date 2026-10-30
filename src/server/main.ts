@@ -5,6 +5,7 @@ import { serve } from "@hono/node-server";
 import { createApp, recordFirstStart } from "./app.js";
 import { ArtifactStore } from "./artifacts.js";
 import { openDatabase } from "./db/index.js";
+import { goalStateAccess } from "./goal-state.js";
 import { applyLegacyEnv, migrateLegacyDatabase } from "./legacy.js";
 import { modelRegistry } from "./model/config.js";
 import { RunEngine } from "./runs.js";
@@ -27,7 +28,12 @@ const builtClient = fileURLToPath(new URL("../../dist/client", import.meta.url))
 // With no default model and none chosen for a channel, starting a run answers 503.
 const models = modelRegistry(process.env);
 const artifacts = new ArtifactStore(db, join(dataDir, "artifacts"));
-const engine = new RunEngine(db, (spec) => models.resolve(spec), undefined, builtInTools(process.env, artifacts));
+const engine = new RunEngine(
+  db,
+  (spec) => models.resolve(spec),
+  undefined,
+  builtInTools(process.env, artifacts, goalStateAccess(db)),
+);
 const recovered = engine.recoverInterrupted();
 if (recovered > 0) console.log(`Marked ${recovered} interrupted run(s) as failed.`);
 const app = createApp({ db, engine, models, artifacts, clientRoot: existsSync(builtClient) ? builtClient : undefined });

@@ -17,6 +17,7 @@ import {
 } from "./channels.js";
 import type { Db } from "./db/index.js";
 import { appMeta } from "./db/schema.js";
+import { currentState, GoalStateError, restoreState, saveUserState, stateVersions } from "./goal-state.js";
 import {
   archiveGoal,
   briefHistory,
@@ -71,6 +72,12 @@ export function createApp({ db, engine, models, artifacts, clientRoot }: AppOpti
       const status =
         err.code === "not_found" ? 404 : err.code === "archived" || err.code === "goal_channel" ? 409 : 400;
       return c.json({ error: err.code, message: err.message }, status);
+    }
+    if (err instanceof GoalStateError) {
+      return c.json(
+        { error: err.code, message: err.message },
+        err.code === "conflict" ? 409 : err.code === "no_such_version" ? 404 : 400,
+      );
     }
     if (err instanceof RunError) {
       const status =
@@ -192,6 +199,22 @@ export function createApp({ db, engine, models, artifacts, clientRoot }: AppOpti
   app.get("/api/goals/:id/brief-versions", (c) => c.json(briefHistory(db, c.req.param("id"))));
   app.post("/api/goals/:id/brief-versions/:version/restore", (c) =>
     c.json(restoreBrief(db, c.req.param("id"), Number(c.req.param("version")))),
+  );
+  app.get("/api/goals/:id/state", (c) => {
+    getGoal(db, c.req.param("id"));
+    return c.json(currentState(db, c.req.param("id")) ?? { version: 0, text: "" });
+  });
+  app.put("/api/goals/:id/state", async (c) => {
+    const { text, baseVersion } = (await body(c)) as { text?: unknown; baseVersion?: unknown };
+    if (typeof text !== "string") throw new HTTPException(400, { message: "text must be a string." });
+    if (baseVersion !== undefined && !Number.isInteger(baseVersion)) {
+      throw new HTTPException(400, { message: "baseVersion must be an integer." });
+    }
+    return c.json(saveUserState(db, c.req.param("id"), { text, baseVersion: baseVersion as number | undefined }));
+  });
+  app.get("/api/goals/:id/state/versions", (c) => c.json(stateVersions(db, c.req.param("id"))));
+  app.post("/api/goals/:id/state/versions/:version/restore", (c) =>
+    c.json(restoreState(db, c.req.param("id"), Number(c.req.param("version")))),
   );
   app.post("/api/goals/:id/archive", (c) => c.json(archiveGoal(db, c.req.param("id"))));
   app.post("/api/goals/:id/restore", (c) => c.json(restoreGoal(db, c.req.param("id"))));
