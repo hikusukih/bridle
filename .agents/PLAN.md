@@ -179,13 +179,13 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P9.3** The ACP delegate tool, verified with one real coding agent. _needs P9.2, P2.3_
 
-- [ ] **P9.4** **Review** of Phase 9. _needs P9.1, P9.2, P9.3_
+- [ ] **P9.4** **Review** of Phase 9. _needs P9.1_
 
 ## Acceptance (the whole thing)
 
 - [ ] **A.1** Installed on a phone, channels, goals, the feed and artifacts are each one tap from the others. _needs every box above_
 
-- [ ] **A.2** Two different model providers and one ACP agent are usable with configuration only. _needs every box above_
+- [ ] **A.2** Two different model providers are usable with configuration only. _needs every box above, except P9.2 and P9.3 while ACP delegates are deferred_
 
 - [ ] **A.3** A goal that needs a login gets it through the request flow, uses it on schedule, and the red-team suite still passes. _needs every box above_
 
