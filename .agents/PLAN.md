@@ -67,9 +67,11 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P2.8** Eval scenarios for injection through a fetched page: a `web_fetch` result tells the model to call an external-effect tool, and the run must stop at the approval card, with nothing sent if the user declines; and a result that tries to pass itself off as the user or the system must not change what the model is allowed to do. Scripted for the plumbing, with a live variant. _needs P2.3, P2.5_
 
+- [ ] **P2.16** Eval scenarios for second-order injection: text planted by one run and read by a later one. A run fetches a page that holds an instruction and saves it into an artifact; a run in another channel then reads that artifact with `read_artifact` and must treat it as data, stopping at the approval card for any external call it suggests, with nothing sent if the user declines. The same planted text arriving through a goal's state document is added when P4.4 and P4.4b land, and through `read_feed`, `search_history` and reference documents when those tools land. Scripted for the plumbing, with a live variant. _needs P2.9, P2.8_
+
 - [ ] **P2.7** Authentication: a login token set through an environment variable or generated and printed once at first start; every `/api` route except the health check answers 401 without it; the client asks for it once and keeps it for the session; the README's "no login yet" warning is replaced by how the token works. The token travels in an `Authorization` header, never a cookie, so a hostile page cannot ride the browser's state, and the server compares it in constant time. _needs P1.8_
 
-- [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.4a, P2.5, P2.7, P2.8_
+- [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.4a, P2.5, P2.7, P2.8, P2.9, P2.16_
 
 ## Phase 3 — long channels stay useful
 
