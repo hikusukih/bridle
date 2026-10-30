@@ -1,0 +1,28 @@
+{
+  "name": "bad-tool-calls-do-not-end-the-run",
+  "description": "An unknown tool is an error result the model can read, and the run carries on to an answer.",
+  "messages": ["Try something."],
+  "script": {
+    "turns": [
+      {
+        "toolCalls": [
+          {
+            "id": "c1",
+            "name": "missing",
+            "arguments": {}
+          }
+        ]
+      },
+      {
+        "text": ["That tool is not available."]
+      }
+    ]
+  },
+  "expect": [
+    {
+      "status": "done",
+      "toolResultIncludes": ["no tool named missing"],
+      "replyIncludes": ["not available"]
+    }
+  ]
+}

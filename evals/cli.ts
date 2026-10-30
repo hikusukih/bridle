@@ -1,10 +1,10 @@
 // Usage: npm run evals [-- <scenario-name-substring>]
-// Add `--live` to run against a real model: set BRIDLE_EVAL_MODEL_MODULE to a module whose default export
-// is a function returning a ModelAdapter. This costs money; run it when a harness change could move results.
+// Add `--live` to run against a real model: it is built from the same configuration as the server, so set
+// BRINDLE_MODEL (such as openai:<model>) and the matching key. This costs money; run it when a harness change
+// could move results.
 
-import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 import type { ModelAdapter } from "../src/server/model/adapter.js";
+import { modelRegistry } from "../src/server/model/config.js";
 import { loadScenarios } from "./load.js";
 import { runScenario } from "./runner.js";
 
@@ -12,19 +12,19 @@ const args = process.argv.slice(2);
 const live = args.includes("--live");
 const filter = args.find((a) => !a.startsWith("--"));
 
-let makeModel: (() => ModelAdapter) | undefined;
+let model: ModelAdapter | undefined;
 if (live) {
-  const path = process.env.BRIDLE_EVAL_MODEL_MODULE;
-  if (!path) {
-    console.error("--live needs BRIDLE_EVAL_MODEL_MODULE, a module whose default export returns a ModelAdapter.");
+  try {
+    model = modelRegistry(process.env).resolve(null);
+  } catch (err) {
+    console.error(`--live needs a configured model: ${(err as Error).message}`);
     process.exit(2);
   }
-  makeModel = ((await import(pathToFileURL(resolve(path)).href)) as { default: () => ModelAdapter }).default;
 }
 
 let failed = 0;
 for (const scenario of loadScenarios().filter((s) => !filter || s.name.includes(filter))) {
-  const result = await runScenario(scenario, makeModel?.());
+  const result = await runScenario(scenario, model);
   if (result.failures.length) {
     failed++;
     console.log(`FAIL ${result.name}`);
