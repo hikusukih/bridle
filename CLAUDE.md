@@ -7,6 +7,7 @@ Brindle is a self-hosted personal agent: a harness plus a phone-friendly web app
 Sessions are short; they often run on whatever usage is left at the end of a window, and can be cut off. Some are started by hand and some by a schedule, unattended, with no memory of earlier runs. More than one can be running at once. Take one box unless the session's prompt says otherwise. So:
 
 1. **Find free work.** Run `git fetch --prune origin '+refs/heads/main:refs/remotes/origin/main' '+refs/heads/box/*:refs/remotes/origin/box/*'` (the clone may be single-branch on some other branch, so both destinations are spelled out; `+` lets a claim branch that was rewritten update; `--prune` drops claims whose branch was deleted on merge), read `.agents/PLAN.md` on `origin/main`, where the box ID and needs rules are at the top, and list the claimed boxes with `git branch -r --list 'origin/box/*'`. Then, in this order:
+   - First merge any box PR that qualifies under **Merging box PRs** below, one at a time, then fetch again: a merge can free boxes. This doesn't count as the session's box.
    - Resume a cut-off box if there is one: a claimed box whose PR is still a draft (or which has no PR at all) and whose branch's last commit (`git log -1 --format=%cI origin/box/<ID>`) is more than 6 hours old. Check out its branch, read the PR description, open the draft PR if it is missing, and carry on. Anything newer may be another session still working; leave it alone.
    - Otherwise take the topmost box that is unchecked, unclaimed, and free by its needs.
    - A claimed box whose PR is ready is waiting on the user. A claimed box whose PR was closed without merging was declined; leave it until the user edits the box or deletes the branch.
@@ -22,10 +23,23 @@ Sessions are short; they often run on whatever usage is left at the end of a win
    If the push is rejected as not a fast-forward, another session claimed the box first: go back to step 1. If it is refused for any other reason (permissions, a branch-name restriction), stop, change nothing else, and quote the error in the session's final message; the claim scheme needs fixing before any box is taken. The empty commit is what makes a race fail; pushing `origin/main` unchanged to an existing branch succeeds silently, so never skip it.
 3. **Open a draft PR right away**, titled `[<ID>] <short summary>`, and keep its description current: what's done, what's left, anything surprising, and a **Proposals** list (see below). If the session is cut off, the draft PR is the handoff.
 4. Finish with tests and the build green, the box checked in `.agents/PLAN.md` within the same PR, and the PR marked ready. Then file the PR's proposals.
-5. Never merge your own PR. The user merges.
+5. Never merge a PR you opened or worked on in this session. A later session may merge a box PR under **Merging box PRs** below; everything else, the user merges.
 6. If a box turns out to need a decision from the user, land that instead of the work: on the box's own branch, add the question with a recommendation to `docs/decisions.md` (`.agents/decisions.md` if it is about process) and add _needs decision: Name_ to the box, leave the box unchecked, and mark the PR ready with a title starting `[<ID>] Decision needed:`. Once it merges, the box waits for the decision to be settled, and the claim goes away with the branch. Then go back to step 1; this doesn't count as the session's box.
 
 If a box turns out too big for one session, split it in `.agents/PLAN.md` within its PR: the part being landed keeps the ID, the rest get suffixed IDs (`P1.2a`, `P1.2b`) that need `P1.2` unless they truly don't. Never renumber or reuse an ID.
+
+## Merging box PRs
+
+A session may merge a box PR only when every one of these holds; if any is in doubt, leave it for the user.
+
+- It is a box PR: branch `box/<ID>`, title `[<ID>] ...`, not a draft, and the title doesn't start with `Decision needed:`.
+- It is code or UI work. Not a **design note** or **review** box, and the diff touches nothing under `docs/` or `.agents/` except checking its own box in `.agents/PLAN.md`. Not labeled `needs-careful-review`, and nothing under the key manager's code. Those are where the user reviews ideas, so the user merges them.
+- No merge conflict, and every check is green on the current head. If the branch is behind `main`, merge `main` into it (never rebase), push, and wait for the checks; that push doesn't restart the quiet period.
+- No open questions: no unresolved review thread, every comment from the user has a reply after it, the description lists nothing as left to do or waiting on the user, and every line under **Proposals** is a link to a filed PR.
+- Quiet for 12 hours: no commit other than a `main` merge, comment or review in the last 12 hours, and it has been ready that long. The user stops a merge with a `hold` label or by saying so in a comment; it stays stopped until the label is removed or the user says go.
+- The diff does what the box says and its own box is checked. If it does something else too, don't merge: comment on the PR saying what, and leave it.
+
+Merge with a merge commit, the way the repo already merges, and delete the branch if GitHub didn't. If GitHub refuses the merge (branch protection, permissions), leave the PR and quote the error in the session's final message. The final message lists every PR the session merged.
 
 ## Proposals: changing the plan
 
