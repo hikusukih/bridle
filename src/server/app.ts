@@ -26,6 +26,7 @@ import {
   GoalError,
   getGoal,
   listGoals,
+  refuseGoalChannel,
   restoreBrief,
   restoreGoal,
 } from "./goals.js";
@@ -67,7 +68,8 @@ export function createApp({ db, engine, models, artifacts, clientRoot }: AppOpti
       return c.json({ error: err.code, message: err.message }, status);
     }
     if (err instanceof GoalError || err instanceof ScopeStatementError) {
-      const status = err.code === "not_found" ? 404 : err.code === "archived" ? 409 : 400;
+      const status =
+        err.code === "not_found" ? 404 : err.code === "archived" || err.code === "goal_channel" ? 409 : 400;
       return c.json({ error: err.code, message: err.message }, status);
     }
     if (err instanceof RunError) {
@@ -140,7 +142,10 @@ export function createApp({ db, engine, models, artifacts, clientRoot }: AppOpti
 
   app.get("/api/channels", (c) => c.json(listChannels(db, { archived: c.req.query("archived") === "true" })));
   app.post("/api/channels", async (c) => c.json(createChannel(db, await nameFrom(c)), 201));
-  app.patch("/api/channels/:id", async (c) => c.json(renameChannel(db, c.req.param("id"), await nameFrom(c))));
+  app.patch("/api/channels/:id", async (c) => {
+    refuseGoalChannel(db, c.req.param("id"));
+    return c.json(renameChannel(db, c.req.param("id"), await nameFrom(c)));
+  });
   app.get("/api/models", (c) => c.json({ default: models?.defaultSpec ?? null }));
   app.post("/api/channels/:id/model", async (c) => {
     const body = (await c.req.json().catch(() => ({}))) as { model?: unknown };
@@ -151,8 +156,14 @@ export function createApp({ db, engine, models, artifacts, clientRoot }: AppOpti
       });
     return c.json(setChannelModel(db, c.req.param("id"), body.model, validate));
   });
-  app.post("/api/channels/:id/archive", (c) => c.json(archiveChannel(db, c.req.param("id"))));
-  app.post("/api/channels/:id/restore", (c) => c.json(restoreChannel(db, c.req.param("id"))));
+  app.post("/api/channels/:id/archive", (c) => {
+    refuseGoalChannel(db, c.req.param("id"));
+    return c.json(archiveChannel(db, c.req.param("id")));
+  });
+  app.post("/api/channels/:id/restore", (c) => {
+    refuseGoalChannel(db, c.req.param("id"));
+    return c.json(restoreChannel(db, c.req.param("id")));
+  });
   app.get("/api/channels/:id/artifacts", (c) => {
     const id = c.req.param("id");
     getChannel(db, id);
@@ -162,6 +173,7 @@ export function createApp({ db, engine, models, artifacts, clientRoot }: AppOpti
   app.delete("/api/channels/:id", async (c) => {
     const id = c.req.param("id");
     getChannel(db, id);
+    refuseGoalChannel(db, id);
     const body = (await c.req.json().catch(() => null)) as { deleteArtifacts?: unknown } | null;
     const ids = body?.deleteArtifacts;
     if (ids !== undefined && (!Array.isArray(ids) || ids.some((x) => typeof x !== "string"))) {

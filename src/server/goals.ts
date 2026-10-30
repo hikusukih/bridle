@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import {
   archiveChannel,
   ChannelError,
@@ -23,7 +23,7 @@ export type GoalWithBrief = Goal & { brief: GoalBrief };
 
 export class GoalError extends Error {
   constructor(
-    readonly code: "not_found" | "archived" | "invalid_title",
+    readonly code: "not_found" | "archived" | "invalid_title" | "goal_channel",
     message: string,
   ) {
     super(message);
@@ -44,6 +44,20 @@ export function getGoal(db: Db, id: string): GoalWithBrief {
   const row = db.select().from(goals).where(eq(goals.id, id)).get();
   if (!row) throw new GoalError("not_found", "No such goal.");
   return withBrief(db, row);
+}
+
+/**
+ * A goal owns its channel: renaming, archiving, restoring or deleting that channel on its own would leave the goal
+ * out of step with it, so the channels API refuses and points to the goal instead.
+ */
+export function refuseGoalChannel(db: Db, channelId: string): void {
+  const goal = db.select().from(goals).where(eq(goals.channelId, channelId)).get();
+  if (goal) {
+    throw new GoalError(
+      "goal_channel",
+      `This channel belongs to the goal "${goal.title}"; change it through the goal.`,
+    );
+  }
 }
 
 export function listGoals(db: Db, opts: { archived?: boolean } = {}): GoalWithBrief[] {
@@ -140,7 +154,9 @@ export function deleteGoal(db: Db, id: string): void {
   const goal = getGoal(db, id);
   db.transaction((tx) => {
     const t = tx as unknown as Db;
-    t.delete(scopeStatements).where(eq(scopeStatements.scopeId, id)).run();
+    t.delete(scopeStatements)
+      .where(and(eq(scopeStatements.scopeKind, "goal"), eq(scopeStatements.scopeId, id)))
+      .run();
     try {
       deleteChannel(t, goal.channelId);
     } catch (error) {

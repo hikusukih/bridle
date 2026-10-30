@@ -110,4 +110,36 @@ describe("goals", () => {
     expect((await app.request("/api/goals/nope")).status).toBe(404);
     expect((await app.request(`/api/goals/${created.id}`, { method: "DELETE" })).status).toBe(204);
   });
+
+  it("the channels API leaves a goal's channel to the goal", async () => {
+    const db = setup();
+    const app = createApp({ db });
+    const goal = createGoal(db, { title: "Rust", brief: "learn" });
+    const send = (path: string, method: string, body?: unknown) =>
+      app.request(path, {
+        method,
+        body: body ? JSON.stringify(body) : undefined,
+        headers: { "content-type": "application/json" },
+      });
+    const channel = `/api/channels/${goal.channelId}`;
+    for (const res of [
+      await send(channel, "PATCH", { name: "Other" }),
+      await send(`${channel}/archive`, "POST"),
+      await send(`${channel}/restore`, "POST"),
+      await send(channel, "DELETE"),
+    ]) {
+      expect(res.status).toBe(409);
+      expect(((await res.json()) as { error: string }).error).toBe("goal_channel");
+    }
+    expect(getChannel(db, goal.channelId)).toMatchObject({ name: "Rust", archivedAt: null });
+    expect(getGoal(db, goal.id).status).toBe("active");
+  });
+
+  it("deleting a goal leaves a channel's statements with the same id alone", () => {
+    const db = setup();
+    const goal = createGoal(db, { title: "A", brief: "one" });
+    writeStatement(db, { scopeKind: "channel", scopeId: goal.id, text: "kept", author: "user", confirmed: true });
+    deleteGoal(db, goal.id);
+    expect(currentStatement(db, "channel", goal.id)).toMatchObject({ text: "kept" });
+  });
 });
