@@ -7,7 +7,8 @@ Brindle is a self-hosted personal agent: a harness plus a phone-friendly web app
 Sessions are short; they often run on whatever usage is left at the end of a window, and can be cut off. Some are started by hand and some by a schedule, unattended, with no memory of earlier runs. More than one can be running at once. Take one box unless the session's prompt says otherwise. So:
 
 1. **Find free work.** Run `git fetch --prune origin '+refs/heads/main:refs/remotes/origin/main' '+refs/heads/box/*:refs/remotes/origin/box/*'` (the clone may be single-branch on some other branch, so both destinations are spelled out; `+` lets a claim branch that was rewritten update; `--prune` drops claims whose branch was deleted on merge), read `.agents/PLAN.md` on `origin/main`, where the box ID and needs rules are at the top, and list the claimed boxes with `git branch -r --list 'origin/box/*'`. Then, in this order:
-   - First merge any box PR that qualifies under **Merging box PRs** below, one at a time, then fetch again: a merge can free boxes. This doesn't count as the session's box.
+   - First address review findings on ready box PRs, as **Addressing reviews** below says.
+   - Then merge any box PR that qualifies under **Merging box PRs** below, one at a time, then fetch again: a merge can free boxes. This doesn't count as the session's box.
    - Resume a cut-off box if there is one: a claimed box whose PR is still a draft (or which has no PR at all) and whose branch's last commit (`git log -1 --format=%cI origin/box/<ID>`) is more than 6 hours old. Check out its branch, read the PR description, open the draft PR if it is missing, and carry on. Anything newer may be another session still working; leave it alone.
    - Otherwise take the topmost box that is unchecked, unclaimed, and free by its needs.
    - A claimed box whose PR is ready is waiting on the user, or on a later session to merge it under **Merging box PRs**. A claimed box whose PR was closed without merging was declined; leave it until the user edits the box or deletes the branch.
@@ -27,6 +28,16 @@ Sessions are short; they often run on whatever usage is left at the end of a win
 6. If a box turns out to need a decision from the user, land that instead of the work: on the box's own branch, add the question with a recommendation to `docs/decisions.md` (`.agents/decisions.md` if it is about process) and add _needs decision: Name_ to the box, leave the box unchecked, and mark the PR ready with a title starting `[<ID>] Decision needed:`. Once it merges, the box waits for the decision to be settled, and the claim goes away with the branch. Then go back to step 1; this doesn't count as the session's box.
 
 If a box turns out too big for one session, split it in `.agents/PLAN.md` within its PR: the part being landed keeps the ID, the rest get suffixed IDs (`P1.2a`, `P1.2b`) that need `P1.2` unless they truly don't. Never renumber or reuse an ID.
+
+## Addressing reviews
+
+The review task posts a comment starting `Brindle review:` on each ready PR and again after each push. The session that built a box has usually ended by then, so later sessions act on it.
+
+- Take a ready box PR whose latest `Brindle review:` says `needs changes` and is newer than its last commit other than a `main` merge. Leave `needs your decision` to the user, and leave PRs that aren't box PRs.
+- Skip it if it has the `addressing-review` label, unless that review is more than 6 hours old: then an earlier session was cut off, so take it over. Otherwise add the label before any other work, so two sessions don't fix the same PR.
+- Check out its `box/<ID>` branch and merge `main` in if it is behind. Fix each finding that is in the box's scope. For one that isn't, or that you think is wrong, don't widen the PR: say why in your reply, and file a proposal if it is a plan change.
+- Push all the fixes as one push, so the review task runs once. Then reply to the review with one line per finding (fixed, with the commit, or not fixing and why), update the PR description, and remove the label. The review task looks again after the push.
+- This doesn't count as the session's box, and the session never merges a PR it fixed (step 5).
 
 ## Merging box PRs
 
