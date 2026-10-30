@@ -83,7 +83,7 @@ The model acts through tools in a registry. Each tool declares its **effect leve
 - `speak` for text-to-speech, writing an audio artifact.
 - `use_credential` and `request_credential`, through the key manager (below).
 
-More tools plug in over **MCP**, and whole external agents (coding agents and the like) plug in over **ACP** as delegates: a run hands them a task and gets their result back as a tool result.
+More tools plug in over **MCP**. Handing whole external agents (coding agents and the like) a task over **ACP** as delegates is deferred; see "ACP delegates" in `docs/decisions.md`.
 
 ## Models
 
