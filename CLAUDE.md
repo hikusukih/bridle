@@ -31,10 +31,10 @@ If a box turns out too big for one session, split it in `.agents/PLAN.md` within
 
 ## Addressing reviews
 
-The review task posts a comment starting `Brindle review:` when a PR opens, and again on a daily run after the morning box work for any PR that has new commits since its last review. The session that built a box has usually ended by then, so later sessions act on it.
+The review task posts a comment starting `Brindle review:` on a daily run after the morning box work, for every ready PR that has no review yet or has new commits since its last one (a PR opened ready is also reviewed right away; box PRs open as drafts, so theirs come from the daily run). The session that built a box has usually ended by then, so later sessions act on it.
 
 - Take a ready box PR whose latest `Brindle review:` says `needs changes` and is newer than its last commit other than a `main` merge. Leave `needs your decision` to the user, and leave PRs that aren't box PRs.
-- Skip it if it has the `addressing-review` label, unless the label was added more than 6 hours ago (the `labeled` event in the PR's timeline) and the branch has no commit since: then an earlier session was cut off, so take it over. Otherwise add the label before any other work, so two sessions don't fix the same PR.
+- Skip it if it has the `addressing-review` label, unless an earlier session was cut off: take it over if the label was added more than 6 hours ago (the `labeled` event in the PR's timeline) and the branch has no commit since, or if the latest `Brindle review:` is newer than the label, since then the earlier session's push landed and was reviewed. Otherwise add the label before any other work, so two sessions don't fix the same PR.
 - Check out its `box/<ID>` branch and merge `main` in if it is behind. Fix each finding that is in the box's scope. For one that isn't, or that you think is wrong, don't widen the PR: say why in your reply, and file a proposal if it is a plan change.
 - Commit all the fixes, then, before pushing, reply to the review with one line per finding (fixed, naming the commit, or not fixing and why) and update the PR description: the review task reads those replies when it runs. Push everything as one push, then remove the label. The review task looks again on its next scheduled run.
 - This doesn't count as the session's box, and the session never merges a PR it fixed (step 5).
