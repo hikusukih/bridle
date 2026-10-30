@@ -91,7 +91,13 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.9** **Design note:** reference documents shared across channels (a cast of characters, contacts, topic notes) as living, versioned artifacts. The note settles: how they are stored next to goal state documents and artifacts; when a run looks one up (the user names a person or topic, or the purpose statement does, and the user's message calls for it) and how a large one is read in part rather than whole; how the agent offers "Save this to People?" and how often; each document's home (starts where it was made, moves with the conversation when it is carried to another channel) and its origin, kept as a note; which writes need the user's confirmation (proposed: any change made from a channel other than its home, since origin stops counting once home moves); and the injection cases (a fetched page or a compromised model trying to plant or rewrite an entry). With eval scenarios. _needs P3.1, P2.4_
 
-- [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5, P3.7, P3.11_
+- [ ] **P3.16** Reference documents, storage and reads: the `reference` artifact scope, the `reference_documents` and `document_versions` tables (the versions table is shared with the goal state document in P4.4, so whichever box lands second reuses it), `read_reference` with an outline for a large document and a section read, `search_references`, the line of document names in the instructions layer, and reference documents in the gallery. Eval scenarios for lookup. _needs P3.9, P3.2, P2.4a_
+
+- [ ] **P3.17** Reference document writes: `update_reference` and `create_reference`, run **taint** set by the registry from the tools that bring in outside text, `needsApproval` showing the "Save this to People?" card for any write that is agent-noticed, from a non-home scope, from a tainted run, or a creation, the per-write size limit and one offer per run, declined facts remembered, and restore from the document's history. Eval scenarios for offers and injection. _needs P3.16, P2.3_
+
+- [ ] **P3.18** Home and origin: a document's home moves when "New channel from here" (P3.11) carries the runs that read or changed it, or when the user moves it by hand; the move is a version with a note. Eval scenarios for home moves and for what a moved home allows. The landing channel's switch (P3.8) does the same once it is built. _needs P3.17, P3.11_
+
+- [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5, P3.7, P3.11, P3.16, P3.17, P3.18_
 
 ## Phase 4 — goals and the scheduler
 
