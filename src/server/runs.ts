@@ -65,7 +65,7 @@ type Decision = "approve" | "decline";
 /** The in-memory side of a run's approvals; the stored events are what survives a restart. */
 type LiveRun = { decisions: Map<string, Decision>; waiters: Map<string, () => void> };
 
-/** What a run needs to pick up where a restart left it: the unanswered calls of its last turn and its counters. */
+/** What a run needs to pick up where a restart left it: the unanswered calls of its last step and its counters. */
 type Resume = {
   step: number;
   tokens: number;
@@ -79,7 +79,7 @@ function payload(e: RunEvent): Record<string, unknown> {
   return JSON.parse(e.data) as Record<string, unknown>;
 }
 
-/** Rebuilds the model's view of one run from its stored events: the user message, each turn, each tool result. */
+/** Rebuilds the model's view of one run from its stored events: the user message, each step's reply and tool calls, each tool result. */
 function messagesFromEvents(stored: RunEvent[]): Message[] {
   const out: Message[] = [];
   let turn: Extract<Message, { role: "assistant" }> | undefined;
@@ -424,6 +424,7 @@ export class RunEngine {
                   scope,
                   signal: controller.signal,
                   log: (message) => console.log(`[${call.name}] ${message}`),
+                  emit: (type, data) => this.append(runId, type, data),
                 });
               } catch (error) {
                 // A cancel or a limit during the tool is the run's to handle, not a tool failure.
