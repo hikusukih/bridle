@@ -1,6 +1,6 @@
 # Design note: ACP delegates
 
-Box P9.2. Status: proposed. Implementation (P9.3) waits until this merges.
+Box P9.2. Status: **deferred, not approved.** The user chose to pass on ACP for now (see "ACP delegates" in `docs/decisions.md`). This draft is kept so the protocol check and the trust analysis need not be redone from scratch; merging it does not unblock P9.3, and the protocol section must be re-checked if the box is revived.
 
 ## Problem
 
