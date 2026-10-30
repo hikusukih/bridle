@@ -36,7 +36,7 @@ The review task posts a comment starting `Brindle review:` on each ready PR and 
 - Take a ready box PR whose latest `Brindle review:` says `needs changes` and is newer than its last commit other than a `main` merge. Leave `needs your decision` to the user, and leave PRs that aren't box PRs.
 - Skip it if it has the `addressing-review` label, unless that review is more than 6 hours old: then an earlier session was cut off, so take it over. Otherwise add the label before any other work, so two sessions don't fix the same PR.
 - Check out its `box/<ID>` branch and merge `main` in if it is behind. Fix each finding that is in the box's scope. For one that isn't, or that you think is wrong, don't widen the PR: say why in your reply, and file a proposal if it is a plan change.
-- Push all the fixes as one push, so the review task runs once. Then reply to the review with one line per finding (fixed, with the commit, or not fixing and why), update the PR description, and remove the label. The review task looks again after the push.
+- Commit all the fixes, then, before pushing, reply to the review with one line per finding (fixed, naming the commit, or not fixing and why) and update the PR description: the review task starts as soon as the push lands and reads those replies. Push everything as one push, so it runs once, then remove the label.
 - This doesn't count as the session's box, and the session never merges a PR it fixed (step 5).
 
 ## Merging box PRs
