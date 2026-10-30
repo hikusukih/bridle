@@ -81,7 +81,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P3.1** **Design note:** context assembly (the layers of a prompt and a token budget for each), the purpose statement, rolling compaction (when it triggers, what it must keep, how a summary is revised), and the drift nudge. _needs P2.1_
 
-- [ ] **P3.2** Context assembly with per-layer budgets, and a debug view showing exactly what a run sent. _needs P3.1, P1.4_
+- [x] **P3.2** Context assembly with per-layer budgets, and a debug view showing exactly what a run sent. _needs P3.1, P1.4_
 
 - [ ] **P3.3** Purpose statements: drafted after the first few exchanges, editable, sent with every run. _needs P3.2_
 
