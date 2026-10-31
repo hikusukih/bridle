@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Greeting } from "../server/app";
+import { api } from "./api";
 import { ChannelsScreen } from "./Channels";
 import { LoginGate } from "./Login";
 import { type ScreenId, screenFromHash, screens } from "./screens";
@@ -11,11 +12,8 @@ function useServerStatus() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/greeting")
-      .then((res) => {
-        if (!res.ok) throw new Error(`Server answered ${res.status}`);
-        return res.json() as Promise<Greeting>;
-      })
+    // Through api() so the login token goes along; the route is gated like every other.
+    api<Greeting>("/api/greeting")
       .then((greeting) => !cancelled && setState({ kind: "ready", greeting }))
       .catch((err: unknown) => !cancelled && setState({ kind: "error", message: String(err) }));
     return () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "./app.js";
-import { requireToken, resolveToken, tokenMatches } from "./auth.js";
+import { resolveToken, tokenMatches } from "./auth.js";
 import { openDatabase } from "./db/index.js";
 
 const token = "test-token-1234abcd1234abcd";
@@ -62,6 +62,5 @@ describe("the API behind the token", () => {
   it("the middleware is the only gate: without a hash the app is open, as the other tests use it", async () => {
     const open = createApp({ db: openDatabase(":memory:") });
     expect((await open.request("/api/channels")).status).toBe(200);
-    expect(typeof requireToken).toBe("function");
   });
 });
