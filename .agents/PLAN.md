@@ -113,7 +113,13 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P4.3a** The Goals screen: list each goal with its next scheduled run, and the form to create and edit one. _needs P4.3, P4.2, P1.1_
 
-- [ ] **P4.4** The state document: `update_goal_state` with versions, shown as an artifact, readable and editable by the user, with history. _needs P4.3, P2.4_
+- [x] **P4.4** The state document: `update_goal_state` with versions, readable and editable by the user on a page of its own, with history. (Landed without its gallery entry, without being sent in a goal run's context, and without eval scenarios: see P4.4a, P4.4b and P4.4c.) _needs P4.3, P2.4_
+
+- [ ] **P4.4a** The state document in the Artifacts gallery: a listing that points at the goal and always shows the latest version (no second copy), linked to the state page from the gallery and from the goal. _needs P4.4, P2.4a_
+
+- [ ] **P4.4b** The goal's current state in every goal run's context, in the layer and order that the context note's cache measurements favor, within its 3,000-token cap. _needs P4.4, P3.2_
+
+- [ ] **P4.4c** Eval scenarios for the state document, from `docs/design/goals.md`: the runner lets a scenario set up a goal and its channel, then scripted runs show a lesson run updating progress with edits, an ambiguous edit refused naming the pair, a stale edit applying after a user edit elsewhere, a same-line conflict that fails with the latest content and then succeeds on retry, an over-cap write refused and condensed, and a restore creating a version. _needs P4.4_
 
 - [ ] **P4.5** `propose_schedule` from plain words, confirmed by the user, with eval scenarios ("twice a day", "weekdays at 6:30", "every other Sunday"). _needs P4.2, P4.3, P2.3, P2.5_
 
