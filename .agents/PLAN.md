@@ -189,7 +189,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P9.5** MCP servers over streamable HTTP: the same tool registration as the stdio client, for servers reached by URL, with the bearer credential held as a key-manager handle that is never in `mcp.json`, and the request refused for any host outside the handle's scope. Hosted MCP servers are mostly HTTP, so stdio alone leaves out most of them. Bearer tokens only; OAuth flows are out of scope. _needs P9.1, P6.3_
 
-- [ ] **P9.4** **Review** of Phase 9. _needs P9.1, P9.5_
+- [ ] **P9.4** **Review** of Phase 9. _needs P9.1_
 
 ## Acceptance (the whole thing)
 
