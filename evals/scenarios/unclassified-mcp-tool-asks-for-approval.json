@@ -1,7 +1,7 @@
 {
   "name": "unclassified-mcp-tool-asks-for-approval",
-  "description": "A plug-in tool the user never classified is treated as external: it waits for a card, does not run when declined, and runs only when approved.",
-  "messages": ["Clear my scratch notes.", "Clear them, I do mean it."],
+  "description": "A plug-in tool the user never classified is treated as external: its call waits for a card, and nothing runs when the user declines. (Approving is covered by external-tool-waits-for-approval.)",
+  "messages": ["Clear my scratch notes."],
   "mcpServers": [
     {
       "name": "scratch",
@@ -27,18 +27,6 @@
       },
       {
         "text": ["Not done."]
-      },
-      {
-        "toolCalls": [
-          {
-            "id": "c2",
-            "name": "scratch__wipe",
-            "arguments": {}
-          }
-        ]
-      },
-      {
-        "text": ["Done."]
       }
     ]
   },
@@ -47,12 +35,6 @@
       "status": "done",
       "approvals": ["decline"],
       "executed": [],
-      "eventTypes": ["message", "tool_call", "approval_request", "approval_decision", "tool_result", "text"]
-    },
-    {
-      "status": "done",
-      "approvals": ["approve"],
-      "executed": ["scratch__wipe"],
       "eventTypes": ["message", "tool_call", "approval_request", "approval_decision", "tool_result", "text"]
     }
   ]
