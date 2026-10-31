@@ -38,7 +38,7 @@ Results go through the usual sizing and come back as tool-result data, like a fe
 
 A run is **tainted** if either of two things is true. First, from the moment a tool result in it came from outside Brindle's own data: `web_fetch`, `web_search`, `read_feed`, and `read_artifact`, `read_reference` or `search_history` of text whose own run was tainted. Second, from its first step, if the context assembled for it contains anything that came from a tainted run: a tool result kept verbatim in history (the context note keeps earlier results and resends them), a compaction summary written from such runs, or a P3.11 seed. Taint is a property of the stored run, of each compaction summary and of each seed, set by the registry and by assembly from the tool's name and from those flags, not by anything the model says. It is a flag on the artifact too, copied from the run that created it (P2.4 records that run), so a tainted run cannot launder text through `create_artifact` and have a later clean run read it as clean.
 
-The cost is deliberate and bounded: after a fetch in a channel, direct writes there need a card until that run's results have been folded into a summary and the summary is itself clean again, which happens when compaction re-summarizes from runs after the fetch fell out of the verbatim window and the summary revision drops what was only in the tainted run. Until then the user sees a card with the diff, a click that is cheap beside the attack it stops.
+The cost is deliberate: after a fetch in a channel, direct writes there need a card for as long as the fetched text, or a summary or seed made from it, is in the context, which in a long channel with compaction can be a long time. The user sees a card with the diff, a click that is cheap beside the attack it stops.
 
 ### Home and origin
 
@@ -76,5 +76,6 @@ The attack to stop is a fetched page, or a compromised model, planting or rewrit
 
 ## Open for the user
 
+- Whether that cost is acceptable: a summary made from a tainted run stays tainted while carried forward, so a channel that fetched once keeps asking for cards. The alternative (clearing taint when the user reads the summary and confirms) trades safety for fewer clicks.
 - Whether the rule for a direct write is too strict or too loose: it is the one place a click is skipped. The proposed rule (user-requested, at home, clean run) can be tightened to "always a card" with one change in `needsApproval` if the first weeks of use show a lie or a mistake.
 - Whether a document should ever be shared with a goal's runs by default. Proposed: yes, by the same tools and the same rules, with a goal's scope counting as its own home only for documents it made.
