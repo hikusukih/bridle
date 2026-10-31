@@ -1,6 +1,6 @@
 # Design note: reference documents
 
-Box P3.9. Status: proposed. Implementation waits until this merges, and its boxes are filed as `[plan]` proposals once it does. Terms in bold at their first use here (**run**, **scope**, **request**, **step** and **card**) are defined in the glossary in `docs/architecture.md`.
+Box P3.9. Status: proposed. Implementation waits until this merges, and its boxes are filed as `[plan]` proposals once it does. Terms in bold at their first use here (**run**, **scope** and **card**) are defined in the glossary in `docs/architecture.md`.
 
 ## Problem
 
@@ -36,11 +36,13 @@ Results go through the usual sizing and come back as tool-result data, like a fe
 - Offers are limited so they do not nag: at most one `agent_noticed` card per run; none for a fact the document already holds; and a declined card's edit is remembered (a hash of the normalized text, per document), so the same fact is not offered again. The harness instructions say durable facts only: a person, a standing preference, a recurring topic; not a one-off.
 - The user's own edits in the UI are `user` versions and never ask.
 
-A run is **tainted** from the first moment a tool result in it came from outside Brindle's own data: `web_fetch`, `web_search`, `read_feed`, and `read_artifact` or `read_reference` of a version whose own run was tainted. Taint is a property of the stored run, set by the registry from the tool's name and the version flag, not by anything the model says.
+A run is **tainted** if either of two things is true. First, from the moment a tool result in it came from outside Brindle's own data: `web_fetch`, `web_search`, `read_feed`, and `read_artifact`, `read_reference` or `search_history` of text whose own run was tainted. Second, from its first step, if the context assembled for it contains anything that came from a tainted run: a tool result kept verbatim in history (the context note keeps earlier results and resends them), a compaction summary written from such runs, or a P3.11 seed. Taint is a property of the stored run, of each compaction summary and of each seed, set by the registry and by assembly from the tool's name and from those flags, not by anything the model says. It is a flag on the artifact too, copied from the run that created it (P2.4 records that run), so a tainted run cannot launder text through `create_artifact` and have a later clean run read it as clean.
+
+The cost is deliberate and bounded: after a fetch in a channel, direct writes there need a card until that run's results have been folded into a summary and the summary is itself clean again, which happens when compaction re-summarizes from runs after the fetch fell out of the verbatim window and the summary revision drops what was only in the tainted run. Until then the user sees a card with the diff, a click that is cheap beside the attack it stops.
 
 ### Home and origin
 
-Home starts as the scope of the run that made the document. It moves in two cases, both on a click the user already makes: accepting a switch from the landing channel (P3.8) or "New channel from here" (P3.11) moves the home of every document the carried runs read or proposed a change to, to the target channel; and the user can move it by hand from the document's page. The landing channel therefore keeps no rights to a document the conversation has left. A move writes a version with the note "home moved from X to Y", so history shows it. The origin note does not change and gives no rights.
+Home starts as the scope of the run that made the document. It moves in two cases, both on a click the user already makes: accepting a switch from the landing channel (P3.8) or "New channel from here" (P3.11) moves the home of each document whose home was the source scope and that the carried runs read or proposed a change to, to the target channel; a document homed elsewhere that the conversation only read stays where it is, so a landing-channel chat that read People does not take direct writes away from the Family channel; and the user can move it by hand from the document's page. The landing channel therefore keeps no rights to a document the conversation has left. A move writes a version with the note "home moved from X to Y", so history shows it. The origin note does not change and gives no rights.
 
 A write from a scope that is not home always shows a card, which is why a move matters: the channel now working on a topic can update its documents directly, and every other channel has to ask.
 
@@ -48,10 +50,10 @@ A write from a scope that is not home always shows a card, which is why a move m
 
 The attack to stop is a fetched page, or a compromised model, planting or rewriting an entry that every later channel reads. The defenses stack so no single one carries it:
 
-- A tainted run never writes without a card, wherever it is and whatever the model claims about who asked. A page can say "add this to People", and the card still shows the diff and says the text came from a fetched page.
+- A tainted run never writes without a card, wherever it is and whatever the model claims about who asked. Taint follows the text into later runs through history, summaries, seeds and artifacts, so waiting one message does not clean a run. A page can say "add this to People", and the card still shows the diff and says the text came from a fetched page.
 - A model that lies with `user_request` gains only a direct write in an untainted run at home, which is the channel the user is already in and the case where a lie costs least; every write is a version with its author, run and scope, so it can be seen and restored.
 - A write adds or replaces at most 2,000 characters, so a single call cannot rewrite a whole document.
-- Reads are data, framed as such, and a version written from a tainted run carries that flag, so a later run that reads it is tainted too and cannot turn it into a direct write elsewhere.
+- Reads are data, framed as such, and a version written from a tainted run carries that flag, so a later run that reads it is tainted too and cannot turn it into a direct write elsewhere. The same holds for an artifact a tainted run created.
 - Nothing in compaction writes a reference document. The summary may point at one by name.
 
 ## Rejected
@@ -67,8 +69,8 @@ The attack to stop is a fetched page, or a compromised model, planting or rewrit
 
 - **Lookup** (scripted): a run where the user names a person reads the right section of a document too large to read whole, and pays for that section, not the document; a message that names nobody reads nothing.
 - **Offer** (scripted, then live): `agent_noticed` always produces a card with the diff; accept writes a version, decline writes nothing; the same declined fact is not offered again; a second offer in one run is refused. Live: in a chat where the user mentions a new colleague's role, the agent offers once, in a sensible form.
-- **Home** (scripted): a `user_request` write at home in a clean run applies without a card; the same call from another channel, and the same call after a `web_fetch` in the run, show a card; the landing-channel switch moves the home of documents it carried and not of others; a moved home gives the old channel no direct writes.
-- **Injection** (scripted, then live): a fetched page tells the model to add or rewrite an entry; the run stops at a card marked as from a fetched page, and with a decline nothing changes. A page claiming to be the user cannot make `user_request` apply. A version written by a tainted run taints a later run that reads it. Live: the same against a real model, which must not obey and must not hide the attempt.
+- **Home** (scripted): a `user_request` write at home in a clean run applies without a card; the same call from another channel, and the same call after a `web_fetch` in the run, show a card; the landing-channel switch moves the home of documents homed in the source scope and not of others, including one the conversation only read; a moved home gives the old channel no direct writes.
+- **Injection** (scripted, then live): a fetched page tells the model to add or rewrite an entry; the run stops at a card marked as from a fetched page, and with a decline nothing changes. A page claiming to be the user cannot make `user_request` apply. A version written by a tainted run taints a later run that reads it; so does an artifact created by a tainted run. A fetch in run N followed by a direct-write attempt in run N+1, a later message with the page still in history, is refused with a card; the same after a compaction summary or a P3.11 seed built from run N. Live: the same against a real model, which must not obey and must not hide the attempt.
 - **Versions** (scripted): every write, restore and home move adds a version with author, run and scope; restore writes a new version; two concurrent edits follow the state document's conflict rule.
 - **Size** (scripted): a write over 2,000 characters and a document over its cap are refused with a message the model can act on.
 
