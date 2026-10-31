@@ -26,6 +26,8 @@ export type RunExpectation = {
   approvals?: ("approve" | "decline")[];
   /** Every string must appear in some tool result stored on the run. */
   toolResultIncludes?: string[];
+  /** The fake tools that actually ran, in order; an empty list asserts that nothing external was sent. */
+  executed?: string[];
   /** Whether the first tool result was cut for the model. */
   toolResultTruncated?: boolean;
 };
@@ -58,13 +60,17 @@ export type ScenarioResult = { name: string; failures: string[] };
 export async function runScenario(scenario: Scenario, live?: ModelAdapter): Promise<ScenarioResult> {
   const db = openDatabase(":memory:");
   const tools = new ToolRegistry();
+  let ran: string[] = [];
   for (const t of scenario.tools ?? []) {
     tools.register({
       name: t.name,
       description: t.name,
       effect: t.effect,
       parameters: { type: "object", properties: {} },
-      execute: async () => t.result.repeat(t.repeat ?? 1),
+      execute: async () => {
+        ran.push(t.name);
+        return t.result.repeat(t.repeat ?? 1);
+      },
     });
   }
   if (scenario.seedArtifacts?.length) {
@@ -110,6 +116,7 @@ export async function runScenario(scenario: Scenario, live?: ModelAdapter): Prom
     const want = scenario.expect[i];
     if (!want) continue;
     const label = `run ${i + 1}`;
+    ran = [];
     const run = engine.start(channel.id, text);
     // Answer approval cards as they appear; the run is parked in "waiting" until each one is answered.
     const answers = [...(want.approvals ?? [])];
@@ -160,6 +167,9 @@ export async function runScenario(scenario: Scenario, live?: ModelAdapter): Prom
     for (const needle of want.toolResultIncludes ?? []) {
       if (!results.some((r) => r.result.includes(needle)))
         failures.push(`${label}: no tool result includes "${needle}"`);
+    }
+    if (want.executed && ran.join() !== want.executed.join()) {
+      failures.push(`${label}: tools that ran were [${ran.join(", ")}], expected [${want.executed.join(", ")}]`);
     }
     if (want.toolResultTruncated !== undefined && results[0]?.truncated !== want.toolResultTruncated) {
       failures.push(
