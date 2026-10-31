@@ -87,7 +87,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.3** Purpose statements: drafted after the first few exchanges, editable, sent with every run. _needs P3.2_
 
-- [ ] **P3.4** Rolling compaction, with eval scenarios: facts, decisions and commitments planted early survive several rounds of compaction. _needs P3.2, P3.3, P2.5_
+- [ ] **P3.4** Rolling compaction, from the context note: the `summaries` table with versions, the fold after a run ends (starting above 70% of layer 4's share and folding down to 40%), a revision that replaces the previous summary within its cap and asks once to shorten, history left verbatim when the call fails or is still over the cap, one fold at a time per channel inside the housekeeping time and output limits, and the summary sent in layer 3. Scripted eval scenarios for the note's compaction plumbing: the trigger and stop points, an unchanged transcript, a failing or oversized summary, a revised summary replacing rather than appending, and the housekeeping limits. _needs P3.2, P3.3, P2.5_
+
+- [ ] **P3.4a** Compaction keeps what matters: the summary refers to artifacts by id and title and stores the reference, and the eval scenarios for it, from the context note: facts, decisions and commitments planted early survive several rounds of compaction (scripted for the plumbing, live for the real test), and an order planted in a fetched page in a folded run does not come out of the next summary as an order. The debug view counts folds and drops over time. _needs P3.4_
 
 - [ ] **P3.11** "New channel from here" on any run: the new channel is seeded from the summary that run used, the run itself, and a freshly refreshed summary of the source, which is left unchanged; a failed seed still creates the channel, empty, with a note. With eval scenarios. _needs P3.3, P3.4_
 
