@@ -11,6 +11,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 - Every box starts with an ID such as **P1.2**. An ID never changes and is never reused, even if the box is reworded, moved or split. Order in this file comes from position, not from the ID: a box added later takes the next unused number in its phase and goes wherever it belongs.
 - Every box ends with what it needs, such as _needs P1.1, P1.3_. A box is free to take only when every ID it needs is checked on `main`. Boxes are checked inside their own PR, so checked on `main` means merged.
 - _needs nothing_ means the box can be taken now. _needs every box above_ means every box above it in this file. A box with no needs written needs the box directly above it.
+- _needs every box in this phase_ is how a **review** box states its needs: every other box under the same phase heading, except a box whose needs end with _not needed by the review_. So adding a box to a phase never edits the review's line, and a box is kept out of its review by marking that box. A box marked that way still lists its own needs before the marker, such as _needs P9.1, P6.3; not needed by the review_.
 - _needs decision: Name_ means the box waits until the decision called Name is under Settled in `docs/decisions.md` or `.agents/decisions.md` on `main`.
 - Boxes that implement a design note list the note's ID in their needs, so a note only holds up the work that depends on it.
 - A blank line separates boxes, so two PRs checking off neighboring boxes merge without a conflict.
@@ -71,13 +72,13 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P2.7** Authentication: a login token set through an environment variable or generated and printed once at first start; every `/api` route except the health check answers 401 without it; the client asks for it once and keeps it for the session; the README's "no login yet" warning is replaced by how the token works. The token travels in an `Authorization` header, never a cookie, so a hostile page cannot ride the browser's state, and the server compares it in constant time. _needs P1.8_
 
-- [ ] **P2.11** Model settings: the context window, the run's step, token and time limits, the housekeeping time limit and cache warming, set per model in a JSON file in the data directory keyed by model spec, holding no secrets. A model without settings gets the defaults from `docs/design/context.md`, chosen for a CPU-only llama.cpp host. The run engine takes its limits from the channel's model instead of one global set, and context assembly takes its window from it instead of the fixed default P3.2 uses. When no window is set, an OpenAI-compatible local server's `/props` is asked, and a configured window larger than the server's is a visible configuration error. The channel view shows the model's window and limits. The context report names the model a request actually used, not the channel's spec, so changing the default model counts as a `model_change` break. A model change also resets where history starts, so runs dropped under a smaller window come back when the new window has room for them. _needs P2.2a, P3.1, P3.2_
+- [ ] **P2.11** Model settings: the context window, the run's step, token and time limits, the housekeeping time limit and cache warming, set per model in a JSON file in the data directory keyed by model spec, holding no secrets. A model without settings gets the defaults from `docs/design/context.md`, chosen for a CPU-only llama.cpp host. The run engine takes its limits from the channel's model instead of one global set, and context assembly takes its window from it instead of the fixed default P3.2 uses. When no window is set, an OpenAI-compatible local server's `/props` is asked, and a configured window larger than the server's is a visible configuration error. The channel view shows the model's window and limits. The context report names the model a request actually used, not the channel's spec, so changing the default model counts as a `model_change` break. A model change also resets where history starts, so runs dropped under a smaller window come back when the new window has room for them. _needs P2.2a, P3.1, P3.2; not needed by the review_
 
-- [ ] **P2.10** Model-boundary integration suite: one set of tests that runs against any OpenAI-compatible server named by `BRINDLE_BOUNDARY_URL`, with a fake llama.cpp server in the repo as the default target so it runs in CI on every PR. The fake server answers chat completions and `/props`, rejects a request over its window the way llama.cpp does, reports cached tokens as the longest common prefix with its previous prompt, and can be told to stall. The tests check that the window is read and a configured one larger than the server's is refused; that Brindle never sends a request it estimates is over the window and turns a server's length rejection into its own "too long for the model" error; that token counts match the server's; that a streamed tool call round-trips; that a request extending the previous one is reported as reusing the cache; and that the run and housekeeping time limits end a stalled call cleanly. One case drives the web app in a browser through a whole run. Pointed at a real server by hand, the same suite prints a report of prompt read speed, reply speed and cache reuse per case. The README's local setup section says how to start llama.cpp's server for Brindle (at least two slots, and that its context size is split across them). _needs P2.11_
+- [ ] **P2.10** Model-boundary integration suite: one set of tests that runs against any OpenAI-compatible server named by `BRINDLE_BOUNDARY_URL`, with a fake llama.cpp server in the repo as the default target so it runs in CI on every PR. The fake server answers chat completions and `/props`, rejects a request over its window the way llama.cpp does, reports cached tokens as the longest common prefix with its previous prompt, and can be told to stall. The tests check that the window is read and a configured one larger than the server's is refused; that Brindle never sends a request it estimates is over the window and turns a server's length rejection into its own "too long for the model" error; that token counts match the server's; that a streamed tool call round-trips; that a request extending the previous one is reported as reusing the cache; and that the run and housekeeping time limits end a stalled call cleanly. One case drives the web app in a browser through a whole run. Pointed at a real server by hand, the same suite prints a report of prompt read speed, reply speed and cache reuse per case. The README's local setup section says how to start llama.cpp's server for Brindle (at least two slots, and that its context size is split across them). _needs P2.11; not needed by the review_
 
-- [ ] **P2.12** The boundary suite in CI against a real llama.cpp server running a tiny model: a pinned llama.cpp release and a pinned, checksummed model of a few hundred megabytes at most, both cached between runs. Reply quality does not matter; real tokenization, real length rejections and real cache reuse do. A case the tiny model cannot do, such as a tool call, is skipped against it with a stated reason. If the job takes more than a few minutes it runs nightly instead of on every PR, and the PR says which. _needs P2.10_
+- [ ] **P2.12** The boundary suite in CI against a real llama.cpp server running a tiny model: a pinned llama.cpp release and a pinned, checksummed model of a few hundred megabytes at most, both cached between runs. Reply quality does not matter; real tokenization, real length rejections and real cache reuse do. A case the tiny model cannot do, such as a tool call, is skipped against it with a stated reason. If the job takes more than a few minutes it runs nightly instead of on every PR, and the PR says which. _needs P2.10; not needed by the review_
 
-- [ ] **P2.6** **Review** of Phase 2. _needs P2.1, P2.2, P2.3, P2.4, P2.4a, P2.5, P2.7, P2.8, P2.13_
+- [ ] **P2.6** **Review** of Phase 2. _needs every box in this phase_
 
 ## Phase 3 — long channels stay useful
 
@@ -99,9 +100,9 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P3.9** **Design note:** reference documents shared across channels (a cast of characters, contacts, topic notes) as living, versioned artifacts. The note settles: how they are stored next to goal state documents and artifacts; when a run looks one up (the user names a person or topic, or the purpose statement does, and the user's message calls for it) and how a large one is read in part rather than whole; how the agent offers "Save this to People?" and how often; each document's home (starts where it was made, moves with the conversation when it is carried to another channel) and its origin, kept as a note; which writes need the user's confirmation (proposed: any change made from a channel other than its home, since origin stops counting once home moves); and the injection cases (a fetched page or a compromised model trying to plant or rewrite an entry). With eval scenarios. _needs P3.1, P2.4_
 
-- [ ] **P3.10** The boundary suite covers context assembly: a 30-turn conversation with at least one compaction fold, in CI against the fake server and the tiny model, where every turn with no planned break in its context report reuses the cache and every cache miss matches a recorded break; the assembled request never exceeds the server's window; a fold finishes within the housekeeping time limit; and with warming on, the turn after a fold reads only its own new tokens. Run by hand against a real server, its report adds cache reuse per turn and the time each fold took, which is the data for tuning the per-model limits. _needs P2.10, P3.2, P3.4_
+- [ ] **P3.10** The boundary suite covers context assembly: a 30-turn conversation with at least one compaction fold, in CI against the fake server and the tiny model, where every turn with no planned break in its context report reuses the cache and every cache miss matches a recorded break; the assembled request never exceeds the server's window; a fold finishes within the housekeeping time limit; and with warming on, the turn after a fold reads only its own new tokens. Run by hand against a real server, its report adds cache reuse per turn and the time each fold took, which is the data for tuning the per-model limits. _needs P2.10, P3.2, P3.4; not needed by the review_
 
-- [ ] **P3.6** **Review** of Phase 3. _needs P3.1, P3.2, P3.3, P3.4, P3.5, P3.7, P3.11_
+- [ ] **P3.6** **Review** of Phase 3. _needs every box in this phase_
 
 ## Phase 4 — goals and the scheduler
 
@@ -125,7 +126,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P4.10** **Design note:** standing permission for external tools: what a goal can grant (a tool, a host, a count or time limit), where grants are stored, how the user reviews and revokes them, how `needsApproval` consults them, what an unattended run does when it needs an approval that has not been granted, and how grants appear in the audit trail. _needs P4.1, P4.3_
 
-- [ ] **P4.8** **Review** of Phase 4. _needs P4.1, P4.2, P4.3, P4.3a, P4.4, P4.5, P4.6, P4.7, P4.9, P4.10_
+- [ ] **P4.8** **Review** of Phase 4. _needs every box in this phase_
 
 ## Phase 5 — the feed
 
@@ -139,7 +140,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P5.6** `read_feed`: a `read` tool that lets a goal run list recent feed items (title, summary, link, date, read state), so a run can build on what earlier runs found instead of rediscovering it; with an eval scenario where a second run does not repeat the first run's items. _needs P5.1, P2.3_
 
-- [ ] **P5.5** **Review** of Phase 5. _needs P5.1, P5.2, P5.3, P5.4, P5.6_
+- [ ] **P5.5** **Review** of Phase 5. _needs every box in this phase_
 
 ## Phase 6 — the key manager
 
@@ -157,7 +158,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P6.7** An adversarial session: an agent given the codebase and told to make the vault leak, with every finding filed as an issue and fixed or answered. _needs P6.6_
 
-- [ ] **P6.8** **Review** of Phase 6. _needs P6.1, P6.2, P6.3, P6.4, P6.5, P6.6, P6.7_
+- [ ] **P6.8** **Review** of Phase 6. _needs every box in this phase_
 
 ## Phase 7 — suggestions
 
@@ -167,7 +168,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P7.3** Eval scenarios: suggestions are relevant to the fixture's goals and never repeat a dismissed one. _needs P7.2, P2.5_
 
-- [ ] **P7.4** **Review** of Phase 7. _needs P7.1, P7.2, P7.3_
+- [ ] **P7.4** **Review** of Phase 7. _needs every box in this phase_
 
 ## Phase 8 — briefs and notifications
 
@@ -179,21 +180,21 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P8.4** Acceptance: a "daily audio brief" goal produces a listenable brief each morning, and a fresh install notifies nothing until the user opts in. _needs P8.1, P8.2, P8.3, P4.7_
 
-- [ ] **P8.5** **Review** of Phase 8. _needs P8.1, P8.2, P8.3, P8.4_
+- [ ] **P8.5** **Review** of Phase 8. _needs every box in this phase_
 
 ## Phase 9 — plug-ins
 
 - [x] **P9.1** MCP client: configure MCP servers, their tools join the registry with an effect level the user assigns. _needs P2.3_
 
-- [ ] **P9.2** **Design note:** ACP delegates (spawning an external agent, mapping a run to its session, surfacing its permission requests as approval cards), after checking the protocol's current state. _needs P2.1, decision: ACP delegates_
+- [ ] **P9.2** **Design note:** ACP delegates (spawning an external agent, mapping a run to its session, surfacing its permission requests as approval cards), after checking the protocol's current state. _needs P2.1, decision: ACP delegates; not needed by the review_
 
-- [ ] **P9.3** The ACP delegate tool, verified with one real coding agent. _needs P9.2, P2.3_
+- [ ] **P9.3** The ACP delegate tool, verified with one real coding agent. _needs P9.2, P2.3; not needed by the review_
 
-- [ ] **P9.5** MCP servers over streamable HTTP: the same tool registration as the stdio client, for servers reached by URL, with the bearer credential held as a key-manager handle that is never in `mcp.json`, and the request refused for any host outside the handle's scope. Hosted MCP servers are mostly HTTP, so stdio alone leaves out most of them. Bearer tokens only; OAuth flows are out of scope. _needs P9.1, P6.3_
+- [ ] **P9.5** MCP servers over streamable HTTP: the same tool registration as the stdio client, for servers reached by URL, with the bearer credential held as a key-manager handle that is never in `mcp.json`, and the request refused for any host outside the handle's scope. Hosted MCP servers are mostly HTTP, so stdio alone leaves out most of them. Bearer tokens only; OAuth flows are out of scope. _needs P9.1, P6.3; not needed by the review_
 
 - [ ] **P9.6** Eval scenarios for MCP as an injection source: a plug-in tool's description (which goes to the model as part of the tool list) or its result tells the model to call an `external` tool, and the run must still stop at the approval card, with nothing sent if the user declines; and a tool the user left unclassified must ask for approval. Scripted for the plumbing, with a live variant. _needs P9.1, P2.8_
 
-- [ ] **P9.4** **Review** of Phase 9. _needs P9.1, P9.6_
+- [ ] **P9.4** **Review** of Phase 9. _needs every box in this phase_
 
 ## Acceptance (the whole thing)
 
