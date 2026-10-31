@@ -63,7 +63,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [ ] **P2.13** Serving artifacts safely: an endpoint that returns an artifact's file only with `Content-Security-Policy: sandbox`, `X-Content-Type-Options: nosniff` and `Content-Disposition: attachment` for every kind except plain text and Markdown (rendered by the client as text, never as HTML), so a `page` artifact written by the model, possibly from fetched web text, cannot run script on the app's origin or reach the app's API. With a test that an HTML artifact containing a script is served with those headers. _needs P2.4_
 
-- [ ] **P2.9** `find_artifacts` and `read_artifact`: `read` tools that let a run in any channel or goal list artifacts by title, kind and provenance, with a text match, and read one's content, cut by the usual result sizing. Artifact content comes back as tool-result data like a fetched page, since an artifact may hold text from the web. With an eval scenario where a run in one channel finds and uses an artifact made in another. _needs P2.4, P2.3_
+- [x] **P2.9** `find_artifacts` and `read_artifact`: `read` tools that let a run in any channel or goal list artifacts by title, kind and provenance, with a text match, and read one's content, cut by the usual result sizing. Artifact content comes back as tool-result data like a fetched page, since an artifact may hold text from the web. With an eval scenario where a run in one channel finds and uses an artifact made in another. _needs P2.4, P2.3_
 
 - [x] **P2.5** Evals: the `evals/` runner, one scenario format, CI running all scenarios against the scripted model, and a manual command to run them against a real model. _needs P1.4, P0.2_
 
