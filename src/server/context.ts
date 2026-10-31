@@ -95,7 +95,10 @@ export function assembleContext(input: ContextInput): { messages: Message[]; rep
   // Layers 1 to 3 report their budgets but don't enforce them: P3.3 and P3.4 cap the text when it is written.
   if (input.scopeStatement) {
     const { kind, text } = input.scopeStatement;
-    head.push({ role: "system", content: text });
+    head.push({
+      role: "system",
+      content: `${kind === "purpose" ? "What this channel is for" : "The goal's brief"}:\n${text}`,
+    });
     layers.push({ name: "scope_statement", tokens: estimateTokens(text), budget: kind === "purpose" ? 300 : 500 });
   }
   if (input.summary) {

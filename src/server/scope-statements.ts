@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq } from "drizzle-orm";
 import type { Db } from "./db/index.js";
-import { scopeStatements } from "./db/schema.js";
+import { goals, scopeStatements } from "./db/schema.js";
 
 // See docs/design/context.md: a purpose statement and a goal brief are one table and two kinds.
 type Stored = typeof scopeStatements.$inferSelect;
@@ -88,4 +88,17 @@ export function restoreStatement(
     { scopeKind, scopeId, text: old.text, author: "user", confirmed: true } as StatementWrite,
     now,
   );
+}
+
+/**
+ * The statement a channel's runs are sent with in layer 2: a goal channel's brief, or an ordinary channel's current
+ * purpose statement. A draft the user hasn't touched is sent too; it is only ever shown as a draft in the UI.
+ */
+export function scopeStatementFor(
+  db: Db,
+  channelId: string,
+): { kind: "purpose" | "goal_brief"; text: string } | undefined {
+  const goal = db.select({ id: goals.id }).from(goals).where(eq(goals.channelId, channelId)).get();
+  const current = goal ? currentStatement(db, "goal", goal.id) : currentStatement(db, "channel", channelId);
+  return current ? { kind: current.kind === "goal_brief" ? "goal_brief" : "purpose", text: current.text } : undefined;
 }

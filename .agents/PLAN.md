@@ -85,7 +85,7 @@ A box marked **review** closes each phase. Its PR follows the proposal rules in 
 
 - [x] **P3.2** Context assembly with per-layer budgets, and a debug view showing exactly what a run sent. _needs P3.1, P1.4_
 
-- [ ] **P3.3** Purpose statements: drafted after the first few exchanges, editable, sent with every run. _needs P3.2_
+- [x] **P3.3** Purpose statements: drafted after the first few exchanges, editable, sent with every run. _needs P3.2_
 
 - [ ] **P3.4** Rolling compaction, with eval scenarios: facts, decisions and commitments planted early survive several rounds of compaction. _needs P3.2, P2.5_
 
