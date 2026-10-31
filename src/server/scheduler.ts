@@ -139,46 +139,60 @@ export class Scheduler {
     const due = this.db.select().from(schedules).where(eq(schedules.enabled, true)).all();
     for (const schedule of due) {
       if (!schedule.nextFireAt || schedule.nextFireAt > now.toISOString()) continue;
-      const occurrences: Date[] = [];
-      let at = new Date(schedule.nextFireAt);
-      // Capped so a once-a-minute schedule on a host that slept for months can't spin.
-      while (at <= now && occurrences.length < 10_000) {
-        occurrences.push(at);
-        at = this.after(schedule.cron, at);
+      // One unreadable row must not stop the poll for the others, and an exception in a timer ends the process.
+      try {
+        this.comeDueOne(schedule, now);
+      } catch (error) {
+        console.error(`Schedule ${schedule.id} skipped this poll: ${(error as Error).message}`);
       }
-      const last = occurrences.at(-1) as Date;
-      const onTime = occurrences.length === 1 && now.getTime() - last.getTime() <= 2 * this.pollMillis;
-      const runsLast =
-        onTime || (schedule.missedPolicy === "catch_up_once" && now.getTime() - last.getTime() <= this.graceMillis);
-      const next = this.after(schedule.cron, now);
-      const stamp = now.toISOString();
+    }
+  }
 
-      this.db.transaction((tx) => {
-        for (const occurrence of occurrences) {
-          const isLast = occurrence === last;
-          if (isLast && runsLast) {
-            // At most one waiting fire per schedule: a newer one replaces an older that never got room.
-            tx.update(scheduleFires)
-              .set({ state: "skipped_busy", updatedAt: stamp })
-              .where(and(eq(scheduleFires.scheduleId, schedule.id), eq(scheduleFires.state, "waiting")))
-              .run();
-          }
-          tx.insert(scheduleFires)
-            .values({
-              id: randomUUID(),
-              scheduleId: schedule.id,
-              dueAt: occurrence.toISOString(),
-              state: isLast && runsLast ? "waiting" : "missed",
-              runId: null,
-              createdAt: stamp,
-              updatedAt: stamp,
-            })
-            .onConflictDoNothing()
+  private comeDueOne(schedule: Schedule, now: Date) {
+    const occurrences: Date[] = [];
+    let at = new Date(schedule.nextFireAt as string);
+    // Capped so a once-a-minute schedule on a host that slept for months can't spin.
+    while (at <= now && occurrences.length < 10_000) {
+      occurrences.push(at);
+      at = this.after(schedule.cron, at);
+    }
+    if (at <= now) {
+      console.warn(
+        `Schedule ${schedule.id}: more than 10,000 occurrences were missed; the earliest ones are not logged.`,
+      );
+    }
+    const last = occurrences.at(-1) as Date;
+    const onTime = occurrences.length === 1 && now.getTime() - last.getTime() <= 2 * this.pollMillis;
+    const runsLast =
+      onTime || (schedule.missedPolicy === "catch_up_once" && now.getTime() - last.getTime() <= this.graceMillis);
+    const next = this.after(schedule.cron, now);
+    const stamp = now.toISOString();
+
+    this.db.transaction((tx) => {
+      for (const occurrence of occurrences) {
+        const isLast = occurrence === last;
+        if (isLast && runsLast) {
+          // At most one waiting fire per schedule: a newer one replaces an older that never got room.
+          tx.update(scheduleFires)
+            .set({ state: "skipped_busy", updatedAt: stamp })
+            .where(and(eq(scheduleFires.scheduleId, schedule.id), eq(scheduleFires.state, "waiting")))
             .run();
         }
-        tx.update(schedules).set({ nextFireAt: next.toISOString() }).where(eq(schedules.id, schedule.id)).run();
-      });
-    }
+        tx.insert(scheduleFires)
+          .values({
+            id: randomUUID(),
+            scheduleId: schedule.id,
+            dueAt: occurrence.toISOString(),
+            state: isLast && runsLast ? "waiting" : "missed",
+            runId: null,
+            createdAt: stamp,
+            updatedAt: stamp,
+          })
+          .onConflictDoNothing()
+          .run();
+      }
+      tx.update(schedules).set({ nextFireAt: next.toISOString() }).where(eq(schedules.id, schedule.id)).run();
+    });
   }
 
   private startWaiting(now: Date) {
@@ -194,6 +208,11 @@ export class Scheduler {
       const stamp = now.toISOString();
       const schedule = this.db.select().from(schedules).where(eq(schedules.id, fire.scheduleId)).get();
       if (!schedule) continue;
+      // Archiving a goal disables its schedules; a fire already waiting must not start a run for it afterward.
+      if (!schedule.enabled) {
+        this.mark(fire.id, "skipped_disabled", stamp);
+        continue;
+      }
       if (now.getTime() - new Date(fire.dueAt).getTime() > this.graceMillis) {
         this.mark(fire.id, "skipped_busy", stamp);
         continue;

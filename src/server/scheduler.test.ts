@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { createChannel } from "./channels.js";
 import { openDatabase } from "./db/index.js";
-import { events, runs } from "./db/schema.js";
+import { events, runs, schedules } from "./db/schema.js";
 import { Scheduler, SchedulerError, type SchedulerHooks, type SchedulerOptions } from "./scheduler.js";
 
 const at = (iso: string) => new Date(iso);
@@ -179,6 +179,28 @@ describe("scheduler", () => {
     scheduler.setEnabled(s.id, true, at("2026-10-28T12:00:00Z"));
     scheduler.tick(at("2026-10-29T10:30:05Z"));
     expect(states(scheduler)).toEqual(["2026-10-29T10:30 started"]);
+  });
+
+  it("a waiting fire for a schedule that was disabled meanwhile never starts", () => {
+    const { scheduler, begun, busy } = setup();
+    const s = scheduler.createSchedule({ goalId: "g", cron: daily, prompt: "go" }, at("2026-10-27T12:00:00Z"));
+    busy.add("g");
+    scheduler.tick(at("2026-10-28T10:30:05Z"));
+    expect(states(scheduler)).toEqual(["2026-10-28T10:30 waiting"]);
+    scheduler.setEnabled(s.id, false);
+    busy.clear();
+    scheduler.tick(at("2026-10-28T11:00:00Z"));
+    expect(begun).toHaveLength(0);
+    expect(states(scheduler)).toEqual(["2026-10-28T10:30 skipped_disabled"]);
+  });
+
+  it("one schedule with an unreadable time zone does not stop the others or the poll", () => {
+    const { db, scheduler, begun } = setup();
+    scheduler.createSchedule({ goalId: "bad", cron: daily, prompt: "go" }, at("2026-10-27T12:00:00Z"));
+    scheduler.createSchedule({ goalId: "good", cron: daily, prompt: "go" }, at("2026-10-27T12:00:00Z"));
+    db.update(schedules).set({ cron: "not a cron" }).where(eq(schedules.goalId, "bad")).run();
+    expect(() => scheduler.tick(at("2026-10-28T10:30:05Z"))).not.toThrow();
+    expect(begun).toHaveLength(1);
   });
 
   it("refuses an expression it can't read", () => {
