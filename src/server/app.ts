@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { streamSSE } from "hono/streaming";
-import type { ArtifactStore } from "./artifacts.js";
+import { type ArtifactKind, type ArtifactStore, artifactKinds } from "./artifacts.js";
 import {
   archiveChannel,
   ChannelError,
@@ -166,6 +166,14 @@ export function createApp({ db, engine, models, artifacts, clientRoot }: AppOpti
   app.post("/api/channels/:id/restore", (c) => {
     refuseGoalChannel(db, c.req.param("id"));
     return c.json(restoreChannel(db, c.req.param("id")));
+  });
+  app.get("/api/artifacts", (c) => {
+    const kind = c.req.query("kind");
+    const scope = c.req.query("scope");
+    if (kind && !artifactKinds.includes(kind as ArtifactKind))
+      throw new HTTPException(400, { message: "Unknown kind." });
+    if (scope && scope !== "channel" && scope !== "goal") throw new HTTPException(400, { message: "Unknown scope." });
+    return c.json(artifacts?.list({ kind, scope }) ?? []);
   });
   app.get("/api/channels/:id/artifacts", (c) => {
     const id = c.req.param("id");
