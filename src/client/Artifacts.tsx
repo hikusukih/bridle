@@ -23,15 +23,23 @@ export function ArtifactsScreen({ empty }: { empty: { title: string; body: strin
   const [problem, setProblem] = useState<string | null>(null);
 
   useEffect(() => {
+    // A slower, older response must not overwrite the one for the filters now on screen.
+    let stale = false;
     const q = new URLSearchParams();
     if (kind) q.set("kind", kind);
     if (scope) q.set("scope", scope);
     api<Artifact[]>(`/api/artifacts?${q}`)
       .then((list) => {
+        if (stale) return;
         setItems(list);
         setProblem(null);
       })
-      .catch((e: unknown) => setProblem(String((e as Error).message)));
+      .catch((e: unknown) => {
+        if (!stale) setProblem(String((e as Error).message));
+      });
+    return () => {
+      stale = true;
+    };
   }, [kind, scope]);
 
   const filtered = kind !== "" || scope !== "";
