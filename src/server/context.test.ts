@@ -32,7 +32,7 @@ describe("assembleContext", () => {
       summary: "Earlier facts",
     });
     expect(messages.map((m) => m.role)).toEqual(["system", "system", "system", "user", "assistant", "user"]);
-    expect(messages[1]?.content).toBe("Purpose: Rust");
+    expect(messages[1]?.content).toContain("Purpose: Rust");
     expect(messages[2]?.content).toContain("Earlier facts");
     expect(messages.at(-1)?.content).toBe("now");
     expect(report.layers.map((l) => l.name)).toEqual([

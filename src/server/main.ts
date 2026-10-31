@@ -4,10 +4,12 @@ import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import { createApp, recordFirstStart } from "./app.js";
 import { ArtifactStore } from "./artifacts.js";
+import { getChannel } from "./channels.js";
 import { openDatabase } from "./db/index.js";
 import { applyLegacyEnv, migrateLegacyDatabase } from "./legacy.js";
 import { connectMcpServers, loadMcpConfig } from "./mcp/index.js";
 import { modelRegistry } from "./model/config.js";
+import { PurposeDrafter } from "./purpose.js";
 import { RunEngine } from "./runs.js";
 import { builtInTools } from "./tools/index.js";
 
@@ -38,6 +40,17 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
   });
 }
 const engine = new RunEngine(db, (spec) => models.resolve(spec), undefined, tools);
+// Housekeeping calls (so far, drafting purpose statements) use the utility model, else the channel's own.
+const utilitySpec = process.env.BRINDLE_UTILITY_MODEL?.trim() || undefined;
+if (utilitySpec) models.validate(utilitySpec);
+const purpose = new PurposeDrafter(db, (channelId) => {
+  const spec = utilitySpec ?? getChannel(db, channelId).model;
+  return {
+    model: models.resolve(spec), // 10 minutes, the default of docs/design/context.md; P2.11's per-model setting replaces it.
+    millis: 10 * 60_000,
+  };
+});
+engine.onRunDone = (channelId) => void purpose.afterRun(channelId);
 const recovered = engine.recoverInterrupted();
 if (recovered > 0) console.log(`Marked ${recovered} interrupted run(s) as failed.`);
 const app = createApp({ db, engine, models, artifacts, clientRoot: existsSync(builtClient) ? builtClient : undefined });
