@@ -312,6 +312,8 @@ function ApprovalCard(props: {
   );
 }
 
+type ModelLimits = { model: string; contextWindow: number; maxSteps: number; maxTokens: number; maxMillis: number };
+
 function ChannelView({ id }: { id: string }) {
   const [channel, setChannel] = useState<Channel | null>(null);
   const [runs, setRuns] = useState<Run[]>([]);
@@ -319,6 +321,7 @@ function ChannelView({ id }: { id: string }) {
   const [problem, setProblem] = useState<string | null>(null);
   const [defaultModel, setDefaultModel] = useState<string | null>(null);
   const [modelText, setModelText] = useState("");
+  const [limits, setLimits] = useState<ModelLimits | null>(null);
   const source = useRef<EventSource | null>(null);
 
   const reload = useCallback(async () => {
@@ -403,6 +406,15 @@ function ChannelView({ id }: { id: string }) {
     }
   };
 
+  // Reloaded when the channel's model changes, since the numbers belong to the model.
+  const channelModel = channel?.model;
+  useEffect(() => {
+    void channelModel;
+    api<ModelLimits | null>(`/api/channels/${id}/model-settings`)
+      .then(setLimits)
+      .catch(() => setLimits(null));
+  }, [id, channelModel]);
+
   const chooseModel = async (model: string | null) => {
     try {
       setChannel(await api<Channel>(`/api/channels/${id}/model`, { method: "POST", body: { model } }));
@@ -426,6 +438,12 @@ function ChannelView({ id }: { id: string }) {
       {channel && (
         <div className="flex flex-col gap-2 text-sm text-slate-600">
           <p>Model: {channel.model ?? (defaultModel ? `${defaultModel} (default)` : "none configured")}</p>
+          {limits && typeof limits.contextWindow === "number" && (
+            <p>
+              Window {limits.contextWindow.toLocaleString("en-US")} tokens · up to {limits.maxSteps} steps,{" "}
+              {limits.maxTokens.toLocaleString("en-US")} tokens and {Math.round(limits.maxMillis / 60_000)} min per run
+            </p>
+          )}
           {!readOnly && (
             <form
               className="flex gap-2"

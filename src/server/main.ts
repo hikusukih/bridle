@@ -8,7 +8,8 @@ import { openDatabase } from "./db/index.js";
 import { applyLegacyEnv, migrateLegacyDatabase } from "./legacy.js";
 import { connectMcpServers, loadMcpConfig } from "./mcp/index.js";
 import { modelRegistry } from "./model/config.js";
-import { RunEngine } from "./runs.js";
+import { applyServerWindows, loadModelSettings, ModelSettingsStore } from "./model/settings.js";
+import { defaultLimits, RunEngine, type RunLimits } from "./runs.js";
 import { builtInTools } from "./tools/index.js";
 
 applyLegacyEnv(process.env);
@@ -27,6 +28,17 @@ recordFirstStart(db);
 const builtClient = fileURLToPath(new URL("../../dist/client", import.meta.url));
 // With no default model and none chosen for a channel, starting a run answers 503.
 const models = modelRegistry(process.env);
+// Per-model window and limits; a local server's own window is asked for once, now, so a mismatch fails at startup.
+const settings = new ModelSettingsStore(loadModelSettings(join(dataDir, "model-settings.json")), models.defaultSpec);
+await applyServerWindows(
+  settings,
+  [...settings.specs(), ...(models.defaultSpec ? [models.defaultSpec] : [])],
+  process.env.BRINDLE_OPENAI_BASE_URL?.trim() || undefined,
+);
+const limitsFor = (spec: string | null): RunLimits => {
+  const s = settings.forSpec(spec);
+  return { ...defaultLimits, ...s };
+};
 const artifacts = new ArtifactStore(db, join(dataDir, "artifacts"));
 const tools = builtInTools(process.env, artifacts);
 // Plug-in tools from <data>/mcp.json, each with an effect level the user assigned.
@@ -37,10 +49,16 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.exit(0);
   });
 }
-const engine = new RunEngine(db, (spec) => models.resolve(spec), undefined, tools);
+const engine = new RunEngine(db, (spec) => models.resolve(spec), limitsFor, tools);
 const recovered = engine.recoverInterrupted();
 if (recovered > 0) console.log(`Marked ${recovered} interrupted run(s) as failed.`);
-const app = createApp({ db, engine, models, artifacts, clientRoot: existsSync(builtClient) ? builtClient : undefined });
+const app = createApp({
+  db,
+  engine,
+  models: { ...models, settings: (spec) => settings.forSpec(spec) },
+  artifacts,
+  clientRoot: existsSync(builtClient) ? builtClient : undefined,
+});
 
 serve({ fetch: app.fetch, hostname: host, port }, (info) => {
   console.log(`Brindle listening on http://${info.address}:${info.port}`);
