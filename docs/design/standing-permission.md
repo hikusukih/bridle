@@ -1,6 +1,6 @@
 # Design note: standing permission for external tools
 
-Box P4.10. Status: proposed. Implementation waits until this merges, and its boxes are filed as `[plan]` proposals once it does. Terms in bold at their first use here (**run**, **scope**, **trigger** and **card**) are defined in the glossary in `docs/architecture.md`.
+Box P4.10. Status: proposed. Implementation waits until this merges, and its boxes are filed as `[plan]` proposals once it does. Terms in bold at their first use here (**run**, **scope** and **card**) are defined in the glossary in `docs/architecture.md`.
 
 ## Problem
 
@@ -16,7 +16,7 @@ A grant belongs to one goal and covers one tool and one subject, with a limit:
 - **Subject.** An exact string, such as `sam@example.com`. A grant for a subject never covers another. A grant for "any subject" exists but takes a second, separate confirmation and is not offered by default.
 - **Limit.** Both a number of uses and an expiry, with defaults (20 uses, 30 days) the user can change before accepting. A grant with no limit cannot be created from a card; the goal page can make one after a plain warning.
 
-A grant is created only by a user's click: on the approval card for an `external` call in a goal's run, an extra choice beside Approve and Decline, "Approve and allow this again for this goal", showing the tool, the subject, the limit and an editable limit; or on the goal's page. The model has no tool for it, and nothing in a brief, a state document, a fetched page or a message can make one.
+A grant is created only by a user's click: on the approval card for an `external` call in a goal's run, an extra choice beside Approve and Decline, "Approve and allow this again for this goal", showing the tool and the subject, with the limit editable; or on the goal's page. The model has no tool for it, and nothing in a brief, a state document, a fetched page or a message can make one.
 
 ### Where grants live
 
@@ -37,16 +37,16 @@ It then spends a use in the same transaction that records the decision, before t
 Nothing new is needed beyond the goals note: the run parks at the card, the approval timeout for a scheduled run is 12 hours, and the run then ends as "stopped: approval not given", visibly. Three additions make that usable:
 
 - The card for a scheduled run is marked as waiting on the goal, and the goal's tile on the Goals screen says "waiting for you", so a user who opens the app finds it without hunting for a run.
-- A call that timed out or was declined is not asked again by a later fire of the same schedule until the user has looked: the goal records the refusal, and the next fire's run is told, in its task message, that the call was not approved and why it stopped, so it can carry on without repeating the question every morning.
+- A call that timed out or was declined is not asked again by a later fire of the same schedule until the user has looked. Nothing new is stored for this; the next fire looks at the previous fire's run for an `approval_decision` event that was declined or timed out, and its run is told, in its task message, that the call was not approved and why it stopped, so it can carry on without repeating the question every morning.
 - Nothing pushes a notification. Pushes are opt-in (Phase 8); until then the card waits where the user will see it.
 
 ### Review and revoke
 
-The goal's page lists its grants: tool, subject, uses left, expiry, last used and where it was created. Revoke is one tap and takes effect for the next check; a call already approved and running finishes. Changing a grant is revoking it and making a new one, so history stays honest. An expired or used-up grant stays listed, greyed, for 30 days so "why did it start asking again" has an answer on the page.
+The goal's page lists its grants: tool, subject, uses left, expiry, last used and where it was created. Revoke is one tap and takes effect for the next check; a call already approved and running finishes. Changing a grant is revoking it and making a new one, so history stays honest. An expired or used-up grant stays listed, grayed, for 30 days so "why did it start asking again" has an answer on the page.
 
 ### The audit trail
 
-Every use is visible where it happened. The run's transcript shows the call as it shows an approved card, with "Allowed by standing permission" and a link to the grant instead of Approve and Decline, in an `approval_decision` event that carries `by: "grant"` and the grant id. `grant_uses` is the same fact seen from the grant's side, and the grant's page shows the latest uses. Creation and revocation are the rows themselves, with their times.
+Every use is visible where it happened. The run's transcript shows the call as it shows an approved card, with "Allowed by standing permission" and a link to the grant instead of Approve and Decline, in an `approval_decision` event that carries `by: "grant"` and the grant id. `grant_uses` is the same fact seen from the grant's side, and the goal's page shows the latest uses of each grant. Creation and revocation are the rows themselves, with their times.
 
 ### What a grant does not do
 
